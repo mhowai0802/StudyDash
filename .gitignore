@@ -1,0 +1,10 @@
+backend/venv/
+backend/.env
+backend/data/progress.json
+backend/materials/
+__pycache__/
+*.pyc
+node_modules/
+frontend/dist/
+.DS_Store
+*.env.local
