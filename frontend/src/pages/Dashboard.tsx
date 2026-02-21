@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   BookOpen,
@@ -7,9 +7,19 @@ import {
   Zap,
   ArrowRight,
   Sparkles,
+  CheckCircle,
 } from "lucide-react";
-import { getCourses, getDeadlines, getStats, aiStudyPlan } from "../api/client";
-import type { Course, Deadline, Stats } from "../types";
+import {
+  getCourses,
+  getDeadlines,
+  getStats,
+  getStudyTasks,
+  toggleStudyTask,
+  addStudyTask,
+  deleteStudyTask,
+  aiStudyPlan,
+} from "../api/client";
+import type { Course, Deadline, Stats, StudyTask, TaskCategories } from "../types";
 import ProgressRing from "../components/ProgressRing";
 import MonthlyCalendar from "../components/MonthlyCalendar";
 import ReactMarkdown from "react-markdown";
@@ -22,15 +32,39 @@ export default function Dashboard({ onStatsUpdate }: DashboardProps) {
   const [courses, setCourses] = useState<Course[]>([]);
   const [deadlines, setDeadlines] = useState<Deadline[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
+  const [studyTasks, setStudyTasks] = useState<StudyTask[]>([]);
+  const [taskCategories, setTaskCategories] = useState<TaskCategories>({});
   const [studyPlan, setStudyPlan] = useState<string>("");
   const [loadingPlan, setLoadingPlan] = useState(false);
   const nav = useNavigate();
 
-  useEffect(() => {
+  const reload = useCallback(() => {
     getCourses().then(setCourses);
     getDeadlines().then(setDeadlines);
     getStats().then(setStats);
+    getStudyTasks().then((data) => {
+      setStudyTasks(data.tasks);
+      setTaskCategories(data.categories);
+    });
   }, []);
+
+  useEffect(() => { reload(); }, [reload]);
+
+  const handleToggleTask = async (id: string) => {
+    await toggleStudyTask(id);
+    reload();
+    onStatsUpdate();
+  };
+
+  const handleAddTask = async (task: { date: string; course_id: string; title: string; hours: number; category: string }) => {
+    await addStudyTask(task);
+    reload();
+  };
+
+  const handleDeleteTask = async (id: string) => {
+    await deleteStudyTask(id);
+    reload();
+  };
 
   const handleGeneratePlan = async () => {
     setLoadingPlan(true);
@@ -43,6 +77,11 @@ export default function Dashboard({ onStatsUpdate }: DashboardProps) {
     setLoadingPlan(false);
   };
 
+  const todayKey = new Date().toISOString().split("T")[0];
+  const todayTasks = studyTasks.filter((t) => t.date === todayKey);
+  const todayDone = todayTasks.filter((t) => t.done).length;
+  const todayHours = todayTasks.reduce((s, t) => s + t.hours, 0);
+
   return (
     <div>
       <div className="page-header">
@@ -53,32 +92,47 @@ export default function Dashboard({ onStatsUpdate }: DashboardProps) {
       </div>
 
       {/* Quick Stats Row */}
-      {stats && (
-        <div className="card-grid card-grid-3" style={{ marginBottom: 24 }}>
-          <div className="card" style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            <div style={{ padding: 12, borderRadius: 12, background: "rgba(99,102,241,0.1)" }}>
-              <Trophy size={24} color="var(--accent-indigo)" />
-            </div>
-            <div>
-              <div style={{ fontSize: 24, fontWeight: 800 }}>{stats.xp} XP</div>
-              <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>
-                Level {stats.level.current.level}: {stats.level.current.name}
+      <div className="card-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", marginBottom: 24 }}>
+        {stats && (
+          <>
+            <div className="card" style={{ display: "flex", alignItems: "center", gap: 16 }}>
+              <div style={{ padding: 12, borderRadius: 12, background: "rgba(99,102,241,0.1)" }}>
+                <Trophy size={24} color="var(--accent-indigo)" />
               </div>
+              <div>
+                <div style={{ fontSize: 24, fontWeight: 800 }}>{stats.xp} XP</div>
+                <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+                  Level {stats.level.current.level}: {stats.level.current.name}
+                </div>
+              </div>
+            </div>
+            <div className="card" style={{ display: "flex", alignItems: "center", gap: 16 }}>
+              <div style={{ padding: 12, borderRadius: 12, background: "rgba(16,185,129,0.1)" }}>
+                <BookOpen size={24} color="var(--accent-emerald)" />
+              </div>
+              <div>
+                <div style={{ fontSize: 24, fontWeight: 800 }}>
+                  {stats.completed_materials}/{stats.total_materials}
+                </div>
+                <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>Materials Done</div>
+              </div>
+            </div>
+          </>
+        )}
+        <div className="card" style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <div style={{ padding: 12, borderRadius: 12, background: "rgba(34,211,238,0.1)" }}>
+            <CheckCircle size={24} color="#22d3ee" />
+          </div>
+          <div>
+            <div style={{ fontSize: 24, fontWeight: 800 }}>
+              {todayDone}/{todayTasks.length}
+            </div>
+            <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+              Today's Tasks ({todayHours}h planned)
             </div>
           </div>
-          <div className="card" style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            <div style={{ padding: 12, borderRadius: 12, background: "rgba(16,185,129,0.1)" }}>
-              <BookOpen size={24} color="var(--accent-emerald)" />
-            </div>
-            <div>
-              <div style={{ fontSize: 24, fontWeight: 800 }}>
-                {stats.completed_materials}/{stats.total_materials}
-              </div>
-              <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>
-                Materials Completed
-              </div>
-            </div>
-          </div>
+        </div>
+        {stats && (
           <div className="card" style={{ display: "flex", alignItems: "center", gap: 16 }}>
             <div style={{ padding: 12, borderRadius: 12, background: "rgba(245,158,11,0.1)" }}>
               <Calendar size={24} color="var(--accent-amber)" />
@@ -87,22 +141,27 @@ export default function Dashboard({ onStatsUpdate }: DashboardProps) {
               <div style={{ fontSize: 24, fontWeight: 800 }}>
                 {stats.completed_deadlines}/{stats.total_deadlines}
               </div>
-              <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>
-                Deadlines Done
-              </div>
+              <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>Deadlines Done</div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Monthly Calendar */}
       <div style={{ marginBottom: 24 }}>
-        <MonthlyCalendar courses={courses} deadlines={deadlines} />
+        <MonthlyCalendar
+          courses={courses}
+          deadlines={deadlines}
+          studyTasks={studyTasks}
+          taskCategories={taskCategories}
+          onToggleTask={handleToggleTask}
+          onAddTask={handleAddTask}
+          onDeleteTask={handleDeleteTask}
+        />
       </div>
 
       {/* Bottom row: Course cards + AI Study Plan */}
       <div className="card-grid card-grid-2" style={{ marginBottom: 24 }}>
-        {/* Course summary cards stacked */}
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {courses.map((c) => {
             const progress =
@@ -137,11 +196,7 @@ export default function Dashboard({ onStatsUpdate }: DashboardProps) {
               </div>
             );
           })}
-          <button
-            className="btn btn-secondary"
-            style={{ width: "100%", justifyContent: "center" }}
-            onClick={() => nav("/deadlines")}
-          >
+          <button className="btn btn-secondary" style={{ width: "100%", justifyContent: "center" }} onClick={() => nav("/deadlines")}>
             <Calendar size={16} /> View All Deadlines <ArrowRight size={14} />
           </button>
         </div>
@@ -153,11 +208,7 @@ export default function Dashboard({ onStatsUpdate }: DashboardProps) {
               <Sparkles size={16} style={{ marginRight: 6, verticalAlign: "middle" }} />
               AI Study Plan
             </h3>
-            <button
-              className="btn btn-sm btn-primary"
-              onClick={handleGeneratePlan}
-              disabled={loadingPlan}
-            >
+            <button className="btn btn-sm btn-primary" onClick={handleGeneratePlan} disabled={loadingPlan}>
               {loadingPlan ? (
                 <><span className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} /> Generating...</>
               ) : (

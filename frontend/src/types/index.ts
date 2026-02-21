@@ -102,3 +102,20 @@ export interface QuizQuestion {
   correct: string;
   explanation: string;
 }
+
+export interface StudyTask {
+  id: string;
+  date: string;
+  course_id: string;
+  title: string;
+  hours: number;
+  category: string;
+  done: boolean;
+}
+
+export interface TaskCategory {
+  label: string;
+  color: string;
+}
+
+export type TaskCategories = Record<string, TaskCategory>;

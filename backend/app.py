@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 from PyPDF2 import PdfReader
 
 from course_data import INITIAL_COURSES, INITIAL_DEADLINES, XP_VALUES, LEVELS
+from study_plan_data import INITIAL_STUDY_TASKS, TASK_CATEGORIES
 
 load_dotenv()
 
@@ -43,12 +44,21 @@ def init_progress():
     data = {
         "courses": INITIAL_COURSES,
         "deadlines": INITIAL_DEADLINES,
+        "study_tasks": INITIAL_STUDY_TASKS,
         "materials": [],
         "xp": 0,
         "completed_materials": [],
         "chat_history": [],
     }
     save_progress(data)
+    return data
+
+
+def ensure_study_tasks(data):
+    """Backfill study_tasks if missing from older data files."""
+    if "study_tasks" not in data:
+        data["study_tasks"] = INITIAL_STUDY_TASKS
+        save_progress(data)
     return data
 
 
@@ -254,6 +264,52 @@ def get_stats():
         "xp_values": XP_VALUES,
         "levels": LEVELS,
     })
+
+
+# ─── Study Tasks Endpoints ───
+
+
+@app.route("/api/study-tasks", methods=["GET"])
+def get_study_tasks():
+    data = ensure_study_tasks(load_progress())
+    return jsonify({"tasks": data["study_tasks"], "categories": TASK_CATEGORIES})
+
+
+@app.route("/api/study-tasks/<task_id>/toggle", methods=["PATCH"])
+def toggle_study_task(task_id):
+    data = ensure_study_tasks(load_progress())
+    task = next((t for t in data["study_tasks"] if t["id"] == task_id), None)
+    if not task:
+        return jsonify({"error": "Not found"}), 404
+    task["done"] = not task["done"]
+    save_progress(data)
+    return jsonify(task)
+
+
+@app.route("/api/study-tasks", methods=["POST"])
+def add_study_task():
+    data = ensure_study_tasks(load_progress())
+    body = request.json
+    task = {
+        "id": str(uuid.uuid4()),
+        "date": body.get("date"),
+        "course_id": body.get("course_id", ""),
+        "title": body.get("title", ""),
+        "hours": body.get("hours", 1),
+        "category": body.get("category", "review"),
+        "done": False,
+    }
+    data["study_tasks"].append(task)
+    save_progress(data)
+    return jsonify(task), 201
+
+
+@app.route("/api/study-tasks/<task_id>", methods=["DELETE"])
+def delete_study_task(task_id):
+    data = ensure_study_tasks(load_progress())
+    data["study_tasks"] = [t for t in data["study_tasks"] if t["id"] != task_id]
+    save_progress(data)
+    return jsonify({"ok": True})
 
 
 # ─── AI Endpoints ───

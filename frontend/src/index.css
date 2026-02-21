@@ -983,14 +983,6 @@ body {
   box-shadow: inset 0 0 0 2px var(--accent-indigo);
 }
 
-.calendar-day-number {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-secondary);
-  margin-bottom: 4px;
-  padding: 0 2px;
-}
-
 .calendar-today-badge {
   display: inline-flex;
   align-items: center;
@@ -1075,6 +1067,104 @@ body {
 .calendar-detail-item-title {
   font-size: 13px;
   font-weight: 500;
+}
+
+/* ─── Study Tasks in Calendar ─── */
+
+.calendar-task-count {
+  float: right;
+  font-size: 10px;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.calendar-task-pill.calendar-task-done .calendar-event-pill-text {
+  text-decoration: line-through;
+  opacity: 0.5;
+}
+
+.calendar-task-detail-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  position: relative;
+}
+
+.calendar-task-check {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  border: 2px solid var(--border);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+  transition: all 0.15s;
+}
+
+.calendar-task-check:hover {
+  transform: scale(1.1);
+}
+
+.calendar-task-check.done {
+  background: var(--accent-emerald);
+  border-color: var(--accent-emerald);
+}
+
+.calendar-task-title {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.calendar-task-title.done {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.calendar-task-meta {
+  display: flex;
+  gap: 10px;
+  margin-top: 3px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.calendar-task-delete {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  opacity: 0;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.calendar-task-detail-item:hover .calendar-task-delete {
+  opacity: 1;
+}
+
+.calendar-task-delete:hover {
+  color: var(--accent-rose);
+  background: rgba(244, 63, 94, 0.1);
+}
+
+.calendar-day-number {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+  padding: 0 2px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 /* Responsive */

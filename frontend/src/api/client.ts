@@ -6,6 +6,8 @@ import type {
   Stats,
   Material,
   ChatEntry,
+  StudyTask,
+  TaskCategories,
 } from "../types";
 
 const api = axios.create({ baseURL: "http://localhost:5001/api" });
@@ -52,3 +54,22 @@ export const aiExplain = (topic: string, courseId: string) =>
 
 export const aiStudyPlan = () =>
   api.post("/ai/study-plan").then((r) => r.data);
+
+export const getStudyTasks = () =>
+  api
+    .get<{ tasks: StudyTask[]; categories: TaskCategories }>("/study-tasks")
+    .then((r) => r.data);
+
+export const toggleStudyTask = (id: string) =>
+  api.patch<StudyTask>(`/study-tasks/${id}/toggle`).then((r) => r.data);
+
+export const addStudyTask = (task: {
+  date: string;
+  course_id: string;
+  title: string;
+  hours: number;
+  category: string;
+}) => api.post<StudyTask>("/study-tasks", task).then((r) => r.data);
+
+export const deleteStudyTask = (id: string) =>
+  api.delete(`/study-tasks/${id}`).then((r) => r.data);
