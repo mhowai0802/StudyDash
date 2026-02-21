@@ -54,7 +54,7 @@ export default function CoursePage({ onStatsUpdate }: CoursePageProps) {
   const { courseId } = useParams<{ courseId: string }>();
   const [course, setCourse] = useState<CourseDetail | null>(null);
   const [expandedWeek, setExpandedWeek] = useState<number | null>(null);
-  const [tab, setTab] = useState<"weeks" | "assessment">("weeks");
+  const [tab, setTab] = useState<"weeks" | "assessment" | "materials">("weeks");
 
   // Upload state
   const [addingToWeek, setAddingToWeek] = useState<number | null>(null);
@@ -182,6 +182,9 @@ export default function CoursePage({ onStatsUpdate }: CoursePageProps) {
         <button className={`tab ${tab === "weeks" ? "active" : ""}`} onClick={() => setTab("weeks")}>
           Weekly Topics
         </button>
+        <button className={`tab ${tab === "materials" ? "active" : ""}`} onClick={() => setTab("materials")}>
+          All Materials ({course.materials.length})
+        </button>
         <button className={`tab ${tab === "assessment" ? "active" : ""}`} onClick={() => setTab("assessment")}>
           Assessment
         </button>
@@ -219,6 +222,87 @@ export default function CoursePage({ onStatsUpdate }: CoursePageProps) {
               </tr>
             </tbody>
           </table>
+        </div>
+      )}
+
+      {tab === "materials" && (
+        <div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+            <div style={{ fontSize: 14, color: "var(--text-secondary)" }}>
+              {course.materials.filter((m) => isCompleted(m.id)).length}/{course.materials.length} completed
+            </div>
+          </div>
+          <div className="material-list">
+            {course.materials.map((m) => {
+              const done = isCompleted(m.id);
+              const Icon = TYPE_ICONS[m.type] || FileText;
+              const weekLabel = m.week > 0
+                ? course.weeks.find((w) => w.week === m.week)?.topic || `Week ${m.week}`
+                : "Unassigned";
+              return (
+                <div key={m.id} className={`material-item ${done ? "completed" : ""}`}>
+                  <div
+                    className={`material-check ${done ? "done" : ""}`}
+                    onClick={() => handleToggle(m.id)}
+                  >
+                    {done && <Check size={12} color="white" />}
+                  </div>
+                  <Icon size={14} color="var(--text-muted)" />
+                  <span className={`material-title ${done ? "done" : ""}`}>
+                    {m.title || m.file_name || "Untitled"}
+                  </span>
+                  <span style={{ fontSize: 11, color: "var(--text-muted)", whiteSpace: "nowrap" }}>
+                    {weekLabel}
+                  </span>
+                  <span className="material-type">{m.type.replace("_", " ")}</span>
+                  <span className="material-xp">+{m.xp} XP</span>
+                  <div className="material-actions">
+                    {m.file_path && (
+                      <button
+                        onClick={() => window.open(`http://localhost:5001/api/materials/file/${courseId}/${m.file_path!.split("/").pop()}`, "_blank")}
+                        title="Open file"
+                      >
+                        <ExternalLink size={14} />
+                      </button>
+                    )}
+                    {m.url && (
+                      <button onClick={() => window.open(m.url, "_blank")} title="Open link">
+                        <ExternalLink size={14} />
+                      </button>
+                    )}
+                    {m.file_path && (
+                      <button
+                        onClick={() => handleSummarize(m)}
+                        disabled={summarizing === m.id}
+                        title="AI Summarize"
+                      >
+                        <Sparkles size={14} />
+                      </button>
+                    )}
+                    <button onClick={() => handleDelete(m.id)} title="Delete">
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {course.materials.length === 0 && (
+            <div style={{ padding: 40, textAlign: "center", color: "var(--text-muted)" }}>
+              No materials yet. Upload files or run the Moodle downloader.
+            </div>
+          )}
+
+          {summary && (
+            <div className="card" style={{ marginTop: 16, background: "var(--bg-primary)" }}>
+              <h4 style={{ fontSize: 14, fontWeight: 600, marginBottom: 8, color: "var(--accent-emerald)" }}>
+                AI Summary
+              </h4>
+              <div className="ai-content">
+                <ReactMarkdown>{summary.text}</ReactMarkdown>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
