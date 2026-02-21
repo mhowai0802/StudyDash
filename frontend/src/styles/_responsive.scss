@@ -1,0 +1,209 @@
+// Tablet / narrow desktop
+@media (max-width: 1100px) {
+  .calendar-day {
+    min-height: 80px;
+    padding: 4px;
+  }
+
+  .calendar-event-pill-text {
+    font-size: 9px;
+  }
+
+  .calendar-month-label {
+    font-size: 16px;
+    min-width: 150px;
+  }
+
+  .calendar-legend {
+    gap: 10px;
+    padding: 8px 14px;
+  }
+
+  .card-grid-3 {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  }
+
+  .card-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+// Mobile / narrow sidebar
+@media (max-width: 768px) {
+  .sidebar {
+    width: 60px;
+    padding: 16px 8px;
+
+    &-logo,
+    &-subtitle,
+    &-section,
+    &-link span,
+    .xp-card {
+      display: none;
+    }
+
+    &-link {
+      justify-content: center;
+      padding: 10px;
+    }
+  }
+
+  .main-content {
+    margin-left: 60px;
+    padding: 16px;
+  }
+
+  .page-title {
+    font-size: 22px;
+  }
+
+  .card-grid-3,
+  .card-grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .calendar-day {
+    min-height: 60px;
+    padding: 3px;
+
+    &-events {
+      display: none;
+    }
+
+    &-dots {
+      display: flex;
+    }
+
+    &-number {
+      font-size: 12px;
+    }
+
+    &::after {
+      content: '';
+      display: flex;
+      gap: 2px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+  }
+
+  .calendar-task-count {
+    font-size: 9px;
+  }
+
+  .calendar-today-badge {
+    width: 20px;
+    height: 20px;
+    font-size: 10px;
+  }
+
+  .calendar-month-label {
+    font-size: 15px;
+    min-width: 130px;
+  }
+
+  .calendar-header {
+    padding: 12px 14px;
+  }
+
+  .calendar-legend {
+    gap: 8px;
+    padding: 6px 10px;
+
+    &-item {
+      font-size: 10px;
+    }
+  }
+
+  .calendar-weekday {
+    font-size: 10px;
+    padding: 6px 0;
+  }
+
+  .calendar-detail {
+    padding: 12px 14px;
+
+    &-header {
+      font-size: 13px;
+      flex-direction: column;
+      gap: 8px;
+      align-items: flex-start !important;
+    }
+  }
+
+  .calendar-task {
+    &-detail-item {
+      padding: 8px 10px;
+      gap: 8px;
+    }
+
+    &-title {
+      font-size: 12px;
+    }
+
+    &-meta {
+      flex-wrap: wrap;
+      gap: 6px;
+      font-size: 10px;
+    }
+
+    &-delete {
+      opacity: 1;
+    }
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+// Very small screens
+@media (max-width: 480px) {
+  .sidebar {
+    width: 48px;
+    padding: 12px 4px;
+
+    &-link {
+      padding: 8px;
+    }
+  }
+
+  .main-content {
+    margin-left: 48px;
+    padding: 12px;
+  }
+
+  .calendar-day {
+    min-height: 44px;
+    padding: 2px;
+
+    &-number {
+      font-size: 11px;
+      justify-content: center;
+    }
+  }
+
+  .calendar-task-count {
+    display: none;
+  }
+
+  .calendar-weekday {
+    font-size: 9px;
+    padding: 4px 0;
+  }
+
+  .calendar-legend {
+    display: none;
+  }
+
+  .calendar-nav-btn {
+    width: 28px;
+    height: 28px;
+  }
+
+  .calendar-month-label {
+    font-size: 14px;
+    min-width: 110px;
+  }
+}

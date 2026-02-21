@@ -1,0 +1,137 @@
+.app-layout {
+  display: flex;
+  width: 100%;
+}
+
+.sidebar {
+  width: 240px;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border);
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 50;
+
+  &-logo {
+    font-size: 22px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, var(--accent-indigo), var(--accent-purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  &-subtitle {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 32px;
+  }
+
+  &-section {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    margin-top: 24px;
+  }
+
+  &-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.15s;
+    margin-bottom: 2px;
+
+    &:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    &.active {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .course-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+  }
+}
+
+.xp-card {
+  margin-top: auto;
+  background: var(--bg-tertiary);
+  border-radius: 12px;
+  padding: 16px;
+
+  &-level {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+
+  &-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+}
+
+.xp-bar {
+  &-bg {
+    height: 6px;
+    background: var(--bg-primary);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  &-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-indigo), var(--accent-purple));
+    border-radius: 3px;
+    transition: width 0.5s ease;
+  }
+
+  &-text {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+}
+
+.main-content {
+  flex: 1;
+  margin-left: 240px;
+  padding: 32px;
+  max-width: calc(100vw - 240px);
+}
+
+.page-header {
+  margin-bottom: 32px;
+}
+
+.page-title {
+  font-size: 28px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.page-subtitle {
+  color: var(--text-secondary);
+  font-size: 14px;
+}

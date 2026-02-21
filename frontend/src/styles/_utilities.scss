@@ -1,0 +1,108 @@
+// Loading
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  color: var(--text-muted);
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent-indigo);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-right: 12px;
+}
+
+// Assessment table
+.assessment-table {
+  width: 100%;
+  font-size: 13px;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  th {
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+}
+
+// Tabs
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0;
+}
+
+.tab {
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all 0.15s;
+
+  &:hover {
+    color: var(--text-primary);
+  }
+
+  &.active {
+    color: var(--accent-indigo);
+    border-bottom-color: var(--accent-indigo);
+  }
+}
+
+// Markdown / AI content
+.ai-content {
+  font-size: 14px;
+  line-height: 1.7;
+
+  h1, h2, h3 {
+    margin-top: 16px;
+    margin-bottom: 8px;
+  }
+
+  ul, ol {
+    padding-left: 20px;
+    margin-bottom: 8px;
+  }
+
+  code {
+    background: var(--bg-primary);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+
+  pre {
+    background: var(--bg-primary);
+    padding: 12px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 8px 0;
+
+    code {
+      padding: 0;
+      background: none;
+    }
+  }
+}
