@@ -309,6 +309,38 @@
     color: var(--text-secondary);
   }
 
+  &-materials {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
+  }
+
+  &-material-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 5px;
+    background: var(--bg-tertiary);
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: all 0.15s;
+    max-width: 220px;
+
+    span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    &:hover {
+      background: rgba(99, 102, 241, 0.15);
+      color: var(--accent-indigo);
+    }
+  }
+
   &-delete {
     background: none;
     border: none;

@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
-import { ChevronLeft, ChevronRight, Check, Plus, Trash2, Clock } from "lucide-react";
-import type { Course, Deadline, StudyTask, TaskCategories } from "../types";
+import { ChevronLeft, ChevronRight, Check, Plus, Trash2, Clock, FileText, ExternalLink } from "lucide-react";
+import type { Course, Deadline, StudyTask, TaskCategories, Material } from "../types";
 
 interface CalendarEvent {
   id: string;
@@ -15,6 +15,7 @@ interface MonthlyCalendarProps {
   deadlines: Deadline[];
   studyTasks: StudyTask[];
   taskCategories: TaskCategories;
+  materials: Material[];
   onToggleTask: (id: string) => void;
   onAddTask: (task: { date: string; course_id: string; title: string; hours: number; category: string }) => void;
   onDeleteTask: (id: string) => void;
@@ -70,11 +71,63 @@ function formatDateKey(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+function getTaskWeekNumbers(title: string): number[] {
+  const weeks: number[] = [];
+  const patterns = [
+    /week\s*(\d+)/gi,
+    /weeks?\s*(\d+)\s*[-–]\s*(\d+)/gi,
+    /\bw(\d+)\b/gi,
+  ];
+  for (const p of patterns) {
+    let m;
+    while ((m = p.exec(title)) !== null) {
+      if (m[2]) {
+        for (let i = parseInt(m[1]); i <= parseInt(m[2]); i++) weeks.push(i);
+      } else {
+        weeks.push(parseInt(m[1]));
+      }
+    }
+  }
+  const lectureMatch = title.match(/lecture\s*(\d+)/i);
+  if (lectureMatch) weeks.push(parseInt(lectureMatch[1]));
+  const labMatch = title.match(/\blab\s*(\d+)/i);
+  if (labMatch) {
+    const labToWeek: Record<string, number[]> = {
+      "nlp": [0, 5, 9, 11],
+      "cvpr": [0, 2, 3, 4, 7, 8, 9, 10],
+    };
+    const labNum = parseInt(labMatch[1]);
+    // Lab numbers don't directly map to weeks without course context, just return labNum
+    weeks.push(labNum);
+  }
+  return [...new Set(weeks)];
+}
+
+function getTaskMaterials(task: StudyTask, materials: Material[]): Material[] {
+  if (!task.course_id) return [];
+  const courseMats = materials.filter((m) => m.course_id === task.course_id && m.week > 0);
+  const title = task.title.toLowerCase();
+
+  // Extract week references from task title
+  const weekNums = getTaskWeekNumbers(task.title);
+  if (weekNums.length > 0) {
+    return courseMats.filter((m) => weekNums.includes(m.week));
+  }
+
+  // Fallback: match keywords in title to material filenames
+  const keywords = title.split(/\s+/).filter((w) => w.length > 3);
+  return courseMats.filter((m) => {
+    const fname = (m.file_name || m.title || "").toLowerCase();
+    return keywords.some((kw) => fname.includes(kw));
+  }).slice(0, 5);
+}
+
 export default function MonthlyCalendar({
   courses,
   deadlines,
   studyTasks,
   taskCategories,
+  materials,
   onToggleTask,
   onAddTask,
   onDeleteTask,
@@ -407,6 +460,33 @@ export default function MonthlyCalendar({
                           <span style={{ color: catColor, fontWeight: 600 }}>{cat?.label || t.category}</span>
                           <span><Clock size={10} style={{ verticalAlign: "middle" }} /> {t.hours}h</span>
                         </div>
+                        {/* Related materials */}
+                        {(() => {
+                          const related = getTaskMaterials(t, materials);
+                          if (related.length === 0) return null;
+                          return (
+                            <div className="calendar-task-materials">
+                              {related.map((m) => (
+                                <a
+                                  key={m.id}
+                                  className="calendar-task-material-link"
+                                  href={
+                                    m.file_path
+                                      ? `http://localhost:5001/api/materials/file/${m.course_id}/${m.file_path.split("/").pop()}`
+                                      : m.url || "#"
+                                  }
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <FileText size={11} />
+                                  <span>{m.file_name || m.title}</span>
+                                  <ExternalLink size={9} />
+                                </a>
+                              ))}
+                            </div>
+                          );
+                        })()}
                       </div>
                       <button
                         className="calendar-task-delete"

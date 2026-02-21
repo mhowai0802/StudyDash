@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import {
   getCourses,
+  getCourse,
   getDeadlines,
   getStats,
   getStudyTasks,
@@ -22,7 +23,7 @@ import {
   deleteStudyTask,
   aiStudyPlan,
 } from "../api/client";
-import type { Course, Deadline, Stats, StudyTask, TaskCategories } from "../types";
+import type { Course, Deadline, Stats, StudyTask, TaskCategories, Material } from "../types";
 import ProgressRing from "../components/ProgressRing";
 import MonthlyCalendar from "../components/MonthlyCalendar";
 import ReactMarkdown from "react-markdown";
@@ -37,13 +38,21 @@ export default function Dashboard({ onStatsUpdate }: DashboardProps) {
   const [stats, setStats] = useState<Stats | null>(null);
   const [studyTasks, setStudyTasks] = useState<StudyTask[]>([]);
   const [taskCategories, setTaskCategories] = useState<TaskCategories>({});
+  const [allMaterials, setAllMaterials] = useState<Material[]>([]);
   const [studyPlan, setStudyPlan] = useState<string>("");
   const [loadingPlan, setLoadingPlan] = useState(false);
   const [showAIPlan, setShowAIPlan] = useState(false);
   const nav = useNavigate();
 
   const reload = useCallback(() => {
-    getCourses().then(setCourses);
+    getCourses().then((data) => {
+      setCourses(data);
+      // Collect materials from all courses
+      Promise.all(data.map((c) => getCourse(c.id))).then((details) => {
+        const mats = details.flatMap((d) => d.materials || []);
+        setAllMaterials(mats);
+      });
+    });
     getDeadlines().then(setDeadlines);
     getStats().then(setStats);
     getStudyTasks().then((data) => {
@@ -132,6 +141,7 @@ export default function Dashboard({ onStatsUpdate }: DashboardProps) {
           deadlines={deadlines}
           studyTasks={studyTasks}
           taskCategories={taskCategories}
+          materials={allMaterials}
           onToggleTask={handleToggleTask}
           onAddTask={handleAddTask}
           onDeleteTask={handleDeleteTask}
