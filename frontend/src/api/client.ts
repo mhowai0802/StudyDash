@@ -58,6 +58,12 @@ export const aiStudyPlan = () =>
 export const assignMaterialWeek = (id: string, week: number) =>
   api.patch(`/materials/${id}/week`, { week }).then((r) => r.data);
 
+export const getProject = (courseId: string) =>
+  api.get(`/project/${courseId}`).then((r) => r.data);
+
+export const toggleMilestone = (courseId: string, milestoneId: string) =>
+  api.patch(`/project/${courseId}/milestone/${milestoneId}/toggle`).then((r) => r.data);
+
 export const getStudyTasks = () =>
   api
     .get<{ tasks: StudyTask[]; categories: TaskCategories }>("/study-tasks")

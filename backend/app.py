@@ -15,6 +15,7 @@ from database import (
 )
 from course_data import XP_VALUES, LEVELS
 from study_plan_data import TASK_CATEGORIES
+from project_data import COURSE_PROJECTS
 
 load_dotenv()
 
@@ -104,6 +105,29 @@ def get_course(course_id):
     d["total_materials"] = len(mats)
     d["completed_count"] = len(completed)
     return jsonify(d)
+
+
+# ─── Project Routes ───
+
+
+@app.route("/api/project/<course_id>", methods=["GET"])
+def get_project(course_id):
+    project = COURSE_PROJECTS.get(course_id)
+    if not project:
+        return jsonify({"error": "No project data for this course"}), 404
+    return jsonify(project)
+
+
+@app.route("/api/project/<course_id>/milestone/<milestone_id>/toggle", methods=["PATCH"])
+def toggle_milestone(course_id, milestone_id):
+    project = COURSE_PROJECTS.get(course_id)
+    if not project:
+        return jsonify({"error": "Not found"}), 404
+    milestone = next((m for m in project["milestones"] if m["id"] == milestone_id), None)
+    if not milestone:
+        return jsonify({"error": "Milestone not found"}), 404
+    milestone["done"] = not milestone["done"]
+    return jsonify(milestone)
 
 
 # ─── Material Routes ───

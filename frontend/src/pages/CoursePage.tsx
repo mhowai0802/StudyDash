@@ -21,6 +21,8 @@ import {
   deleteMaterial,
   toggleMaterial,
   assignMaterialWeek,
+  getProject,
+  toggleMilestone,
   aiQuiz,
   aiSummarize,
   aiExplain,
@@ -55,7 +57,8 @@ export default function CoursePage({ onStatsUpdate }: CoursePageProps) {
   const { courseId } = useParams<{ courseId: string }>();
   const [course, setCourse] = useState<CourseDetail | null>(null);
   const [expandedWeek, setExpandedWeek] = useState<number | null>(null);
-  const [tab, setTab] = useState<"weeks" | "assessment" | "materials">("weeks");
+  const [tab, setTab] = useState<"weeks" | "assessment" | "materials" | "project">("weeks");
+  const [project, setProject] = useState<any>(null);
 
   // Upload state
   const [addingToWeek, setAddingToWeek] = useState<number | null>(null);
@@ -77,7 +80,10 @@ export default function CoursePage({ onStatsUpdate }: CoursePageProps) {
   const [explanation, setExplanation] = useState<{ week: number; text: string } | null>(null);
 
   const reload = () => {
-    if (courseId) getCourse(courseId).then(setCourse);
+    if (courseId) {
+      getCourse(courseId).then(setCourse);
+      getProject(courseId).then(setProject).catch(() => setProject(null));
+    }
   };
 
   useEffect(() => {
@@ -186,10 +192,108 @@ export default function CoursePage({ onStatsUpdate }: CoursePageProps) {
         <button className={`tab ${tab === "materials" ? "active" : ""}`} onClick={() => setTab("materials")}>
           All Materials ({course.materials.length})
         </button>
+        {project && (
+          <button className={`tab ${tab === "project" ? "active" : ""}`} onClick={() => setTab("project")}>
+            Project
+          </button>
+        )}
         <button className={`tab ${tab === "assessment" ? "active" : ""}`} onClick={() => setTab("assessment")}>
           Assessment
         </button>
       </div>
+
+      {tab === "project" && project && (
+        <div>
+          <div className="card" style={{ marginBottom: 20 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+              <div>
+                <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>{project.title}</h3>
+                <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>{project.type}</div>
+              </div>
+              <div style={{ textAlign: "right", fontSize: 12, color: "var(--text-muted)" }}>
+                <div>Presentation: {new Date(project.presentation_date + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</div>
+                <div>Report due: {project.report_deadline}</div>
+              </div>
+            </div>
+            <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: 16 }}>
+              {project.summary}
+            </p>
+            <div style={{ fontSize: 13, color: "var(--text-muted)" }}>
+              Presentation format: {project.presentation}
+            </div>
+          </div>
+
+          {/* Milestones */}
+          <div className="card" style={{ marginBottom: 20 }}>
+            <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Milestones</h3>
+            <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 16 }}>
+              {project.milestones.filter((m: any) => m.done).length}/{project.milestones.length} completed
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {project.milestones.map((m: any) => {
+                const due = new Date(m.due + "T00:00:00");
+                const today = new Date();
+                const isPast = due < today && !m.done;
+                const daysLeft = Math.ceil((due.getTime() - today.getTime()) / 86400000);
+                return (
+                  <div
+                    key={m.id}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 10,
+                      padding: "10px 14px", borderRadius: 8,
+                      background: m.done ? "rgba(16,185,129,0.06)" : isPast ? "rgba(244,63,94,0.06)" : "var(--bg-tertiary)",
+                      borderLeft: `4px solid ${m.done ? "var(--accent-emerald)" : isPast ? "var(--accent-rose)" : "var(--border)"}`,
+                    }}
+                  >
+                    <div
+                      className={`material-check ${m.done ? "done" : ""}`}
+                      onClick={async () => {
+                        await toggleMilestone(courseId!, m.id);
+                        reload();
+                      }}
+                    >
+                      {m.done && <Check size={12} color="white" />}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 14, fontWeight: 500, textDecoration: m.done ? "line-through" : "none", color: m.done ? "var(--text-muted)" : "var(--text-primary)" }}>
+                        {m.title}
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 11, color: isPast ? "var(--accent-rose)" : "var(--text-muted)", whiteSpace: "nowrap" }}>
+                      {due.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                      {!m.done && (
+                        <span style={{ marginLeft: 6 }}>
+                          {daysLeft < 0 ? `${Math.abs(daysLeft)}d overdue` : daysLeft === 0 ? "Today" : `${daysLeft}d left`}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Topic Ideas */}
+          {project.topic_ideas && (
+            <div className="card">
+              <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>Topic Ideas</h3>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {project.topic_ideas.map((idea: string, i: number) => (
+                  <div
+                    key={i}
+                    style={{
+                      padding: "8px 14px", borderRadius: 8, background: "var(--bg-tertiary)",
+                      fontSize: 13, color: "var(--text-secondary)", border: "1px solid var(--border)",
+                    }}
+                  >
+                    {idea}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {tab === "assessment" && (
         <div className="card" style={{ maxWidth: 600 }}>
