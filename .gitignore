@@ -1,6 +1,6 @@
 backend/venv/
 backend/.env
-backend/data/progress.json
+backend/data/
 backend/materials/
 __pycache__/
 *.pyc
