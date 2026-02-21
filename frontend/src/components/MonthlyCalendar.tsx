@@ -259,6 +259,7 @@ export default function MonthlyCalendar({
                   </span>
                 )}
               </div>
+              {/* Full pills (hidden on mobile via CSS) */}
               <div className="calendar-day-events">
                 {dayEvents.slice(0, 2).map((ev) => (
                   <div
@@ -287,6 +288,17 @@ export default function MonthlyCalendar({
                   <div className="calendar-event-more">+{allItems.length - 4} more</div>
                 )}
               </div>
+              {/* Compact dot indicators (visible on mobile only) */}
+              {(dayEvents.length > 0 || dayTasks.length > 0) && (
+                <div className="calendar-day-dots">
+                  {dayEvents.slice(0, 4).map((ev) => (
+                    <span key={ev.id} className="calendar-dot" style={{ background: EVENT_STYLES[ev.type]?.border }} />
+                  ))}
+                  {dayTasks.length > 0 && (
+                    <span className="calendar-dot" style={{ background: doneCount === totalTasks ? "var(--accent-emerald)" : "#22d3ee" }} />
+                  )}
+                </div>
+              )}
             </div>
           );
         })}
