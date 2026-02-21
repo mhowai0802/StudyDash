@@ -26,6 +26,10 @@
   .card-grid-2 {
     grid-template-columns: 1fr;
   }
+
+  .dash-courses {
+    grid-template-columns: 1fr;
+  }
 }
 
 // Mobile / narrow sidebar
@@ -62,6 +66,56 @@
     grid-template-columns: 1fr;
   }
 
+  // Dashboard header stacks
+  .dash-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .dash-title {
+    font-size: 22px;
+  }
+
+  .dash-stats-row {
+    width: 100%;
+  }
+
+  .dash-stat {
+    padding: 6px 10px;
+
+    &-value {
+      font-size: 13px;
+    }
+
+    &-label {
+      font-size: 10px;
+    }
+  }
+
+  .dash-courses {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .dash-course-body {
+    padding: 12px;
+  }
+
+  .dash-ai-bar {
+    padding: 12px 14px;
+    flex-wrap: wrap;
+
+    &-hint {
+      display: none;
+    }
+  }
+
+  .dash-ai-content {
+    padding: 14px;
+  }
+
+  // Calendar compact
   .calendar-day {
     min-height: 60px;
     padding: 3px;
@@ -172,6 +226,19 @@
   .main-content {
     margin-left: 48px;
     padding: 12px;
+  }
+
+  .dash-stats-row {
+    gap: 4px;
+  }
+
+  .dash-stat {
+    padding: 5px 8px;
+    gap: 4px;
+
+    &-label {
+      display: none;
+    }
   }
 
   .calendar-day {

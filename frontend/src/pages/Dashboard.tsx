@@ -8,6 +8,9 @@ import {
   ArrowRight,
   Sparkles,
   CheckCircle,
+  Clock,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import {
   getCourses,
@@ -36,6 +39,7 @@ export default function Dashboard({ onStatsUpdate }: DashboardProps) {
   const [taskCategories, setTaskCategories] = useState<TaskCategories>({});
   const [studyPlan, setStudyPlan] = useState<string>("");
   const [loadingPlan, setLoadingPlan] = useState(false);
+  const [showAIPlan, setShowAIPlan] = useState(false);
   const nav = useNavigate();
 
   const reload = useCallback(() => {
@@ -68,6 +72,7 @@ export default function Dashboard({ onStatsUpdate }: DashboardProps) {
 
   const handleGeneratePlan = async () => {
     setLoadingPlan(true);
+    setShowAIPlan(true);
     try {
       const result = await aiStudyPlan();
       setStudyPlan(result.plan);
@@ -83,72 +88,45 @@ export default function Dashboard({ onStatsUpdate }: DashboardProps) {
   const todayHours = todayTasks.reduce((s, t) => s + t.hours, 0);
 
   return (
-    <div>
-      <div className="page-header">
-        <h1 className="page-title">Dashboard</h1>
-        <p className="page-subtitle">
-          Welcome back! Here's your study overview.
-        </p>
-      </div>
-
-      {/* Quick Stats Row */}
-      <div className="card-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", marginBottom: 24 }}>
-        {stats && (
-          <>
-            <div className="card" style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              <div style={{ padding: 12, borderRadius: 12, background: "rgba(99,102,241,0.1)" }}>
-                <Trophy size={24} color="var(--accent-indigo)" />
-              </div>
-              <div>
-                <div style={{ fontSize: 24, fontWeight: 800 }}>{stats.xp} XP</div>
-                <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>
-                  Level {stats.level.current.level}: {stats.level.current.name}
-                </div>
-              </div>
-            </div>
-            <div className="card" style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              <div style={{ padding: 12, borderRadius: 12, background: "rgba(16,185,129,0.1)" }}>
-                <BookOpen size={24} color="var(--accent-emerald)" />
-              </div>
-              <div>
-                <div style={{ fontSize: 24, fontWeight: 800 }}>
-                  {stats.completed_materials}/{stats.total_materials}
-                </div>
-                <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>Materials Done</div>
-              </div>
-            </div>
-          </>
-        )}
-        <div className="card" style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <div style={{ padding: 12, borderRadius: 12, background: "rgba(34,211,238,0.1)" }}>
-            <CheckCircle size={24} color="#22d3ee" />
-          </div>
-          <div>
-            <div style={{ fontSize: 24, fontWeight: 800 }}>
-              {todayDone}/{todayTasks.length}
-            </div>
-            <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>
-              Today's Tasks ({todayHours}h planned)
-            </div>
-          </div>
+    <div className="dash">
+      {/* Header with inline stats */}
+      <div className="dash-header">
+        <div className="dash-header-left">
+          <h1 className="dash-title">Dashboard</h1>
+          <p className="dash-subtitle">Your study command center</p>
         </div>
-        {stats && (
-          <div className="card" style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            <div style={{ padding: 12, borderRadius: 12, background: "rgba(245,158,11,0.1)" }}>
-              <Calendar size={24} color="var(--accent-amber)" />
+        <div className="dash-stats-row">
+          {stats && (
+            <div className="dash-stat">
+              <Trophy size={16} color="var(--accent-indigo)" />
+              <span className="dash-stat-value">{stats.xp}</span>
+              <span className="dash-stat-label">XP</span>
             </div>
-            <div>
-              <div style={{ fontSize: 24, fontWeight: 800 }}>
-                {stats.completed_deadlines}/{stats.total_deadlines}
-              </div>
-              <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>Deadlines Done</div>
-            </div>
+          )}
+          <div className="dash-stat">
+            <CheckCircle size={16} color="#22d3ee" />
+            <span className="dash-stat-value">{todayDone}/{todayTasks.length}</span>
+            <span className="dash-stat-label">Today</span>
           </div>
-        )}
+          {todayHours > 0 && (
+            <div className="dash-stat">
+              <Clock size={16} color="var(--accent-amber)" />
+              <span className="dash-stat-value">{todayHours}h</span>
+              <span className="dash-stat-label">Planned</span>
+            </div>
+          )}
+          {stats && (
+            <div className="dash-stat">
+              <BookOpen size={16} color="var(--accent-emerald)" />
+              <span className="dash-stat-value">{stats.completed_materials}/{stats.total_materials}</span>
+              <span className="dash-stat-label">Materials</span>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Monthly Calendar */}
-      <div style={{ marginBottom: 24 }}>
+      {/* Full-width Calendar */}
+      <section className="dash-calendar">
         <MonthlyCalendar
           courses={courses}
           deadlines={deadlines}
@@ -158,11 +136,17 @@ export default function Dashboard({ onStatsUpdate }: DashboardProps) {
           onAddTask={handleAddTask}
           onDeleteTask={handleDeleteTask}
         />
-      </div>
+      </section>
 
-      {/* Bottom row: Course cards + AI Study Plan */}
-      <div className="card-grid card-grid-2" style={{ marginBottom: 24 }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      {/* Courses strip */}
+      <section className="dash-section">
+        <div className="dash-section-header">
+          <h2 className="dash-section-title">Courses</h2>
+          <button className="btn btn-sm btn-secondary" onClick={() => nav("/deadlines")}>
+            <Calendar size={14} /> Deadlines <ArrowRight size={14} />
+          </button>
+        </div>
+        <div className="dash-courses">
           {courses.map((c) => {
             const progress =
               c.total_materials && c.completed_materials != null
@@ -171,62 +155,69 @@ export default function Dashboard({ onStatsUpdate }: DashboardProps) {
             return (
               <div
                 key={c.id}
-                className="card course-card"
-                style={{ borderTopColor: c.color }}
+                className="dash-course-card"
                 onClick={() => nav(`/course/${c.id}`)}
               >
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                      <span style={{ width: 10, height: 10, borderRadius: "50%", background: c.color, flexShrink: 0 }} />
-                      <span style={{ fontSize: 15, fontWeight: 700 }}>{c.code}</span>
-                      <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{c.schedule}</span>
+                <div className="dash-course-accent" style={{ background: c.color }} />
+                <div className="dash-course-body">
+                  <div className="dash-course-top">
+                    <div>
+                      <div className="dash-course-code">{c.code}</div>
+                      <div className="dash-course-schedule">{c.schedule}</div>
                     </div>
-                    <div className="course-card-stats" style={{ borderTop: "none", paddingTop: 0, marginTop: 0 }}>
-                      <div className="course-card-stat">
-                        <strong>{c.completed_materials || 0}</strong>/{c.total_materials || 0} materials
-                      </div>
-                      <div className="course-card-stat">
-                        <strong>{c.total_weeks}</strong> weeks
-                      </div>
-                    </div>
+                    <ProgressRing progress={progress} size={44} strokeWidth={4} color={c.color} />
                   </div>
-                  <ProgressRing progress={progress} size={48} strokeWidth={4} color={c.color} />
+                  <div className="dash-course-bottom">
+                    <span><strong>{c.completed_materials || 0}</strong>/{c.total_materials || 0} materials</span>
+                    <span><strong>{c.total_weeks}</strong> weeks</span>
+                  </div>
                 </div>
               </div>
             );
           })}
-          <button className="btn btn-secondary" style={{ width: "100%", justifyContent: "center" }} onClick={() => nav("/deadlines")}>
-            <Calendar size={16} /> View All Deadlines <ArrowRight size={14} />
-          </button>
         </div>
+      </section>
 
-        {/* AI Study Plan */}
-        <div className="card" style={{ alignSelf: "start" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-            <h3 style={{ fontSize: 16, fontWeight: 700 }}>
-              <Sparkles size={16} style={{ marginRight: 6, verticalAlign: "middle" }} />
-              AI Study Plan
-            </h3>
-            <button className="btn btn-sm btn-primary" onClick={handleGeneratePlan} disabled={loadingPlan}>
-              {loadingPlan ? (
-                <><span className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} /> Generating...</>
-              ) : (
-                <><Zap size={14} /> Generate Plan</>
-              )}
-            </button>
+      {/* AI Study Plan - collapsible */}
+      <section className="dash-section">
+        <div className="dash-ai-bar" onClick={() => !studyPlan && !loadingPlan ? handleGeneratePlan() : setShowAIPlan(!showAIPlan)}>
+          <div className="dash-ai-bar-left">
+            <Sparkles size={18} color="var(--accent-indigo)" />
+            <span className="dash-ai-bar-title">AI Study Plan</span>
+            {!studyPlan && !loadingPlan && (
+              <span className="dash-ai-bar-hint">Click to generate a personalized plan</span>
+            )}
           </div>
-          {studyPlan ? (
-            <div className="ai-content" style={{ maxHeight: 400, overflowY: "auto" }}>
+          <div className="dash-ai-bar-right">
+            {!studyPlan && !loadingPlan && (
+              <button className="btn btn-sm btn-primary" onClick={(e) => { e.stopPropagation(); handleGeneratePlan(); }}>
+                <Zap size={14} /> Generate
+              </button>
+            )}
+            {loadingPlan && (
+              <span className="dash-ai-loading">
+                <span className="spinner" style={{ width: 14, height: 14, borderWidth: 2, marginRight: 6 }} />
+                Generating...
+              </span>
+            )}
+            {studyPlan && !loadingPlan && (
+              <>
+                <button className="btn btn-sm btn-secondary" onClick={(e) => { e.stopPropagation(); handleGeneratePlan(); }}>
+                  <Zap size={14} /> Regenerate
+                </button>
+                {showAIPlan ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+              </>
+            )}
+          </div>
+        </div>
+        {showAIPlan && studyPlan && (
+          <div className="dash-ai-content">
+            <div className="ai-content">
               <ReactMarkdown>{studyPlan}</ReactMarkdown>
             </div>
-          ) : (
-            <div style={{ padding: 20, textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>
-              Click "Generate Plan" to get a personalized AI study plan based on your current progress and upcoming deadlines.
-            </div>
-          )}
-        </div>
-      </div>
+          </div>
+        )}
+      </section>
     </div>
   );
 }

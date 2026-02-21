@@ -1,0 +1,201 @@
+.dash {
+  max-width: 1100px;
+}
+
+// Header with inline stats
+.dash-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 28px;
+  gap: 20px;
+
+  &-left {
+    flex-shrink: 0;
+  }
+}
+
+.dash-title {
+  font-size: 26px;
+  font-weight: 800;
+  margin-bottom: 2px;
+}
+
+.dash-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.dash-stats-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.dash-stat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  white-space: nowrap;
+
+  &-value {
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  &-label {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+}
+
+// Calendar section
+.dash-calendar {
+  margin-bottom: 32px;
+}
+
+// Generic section
+.dash-section {
+  margin-bottom: 24px;
+
+  &-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  &-title {
+    font-size: 17px;
+    font-weight: 700;
+  }
+}
+
+// Course cards strip
+.dash-courses {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.dash-course-card {
+  display: flex;
+  border-radius: 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s;
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: var(--bg-hover);
+  }
+}
+
+.dash-course-accent {
+  width: 5px;
+  flex-shrink: 0;
+}
+
+.dash-course-body {
+  flex: 1;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dash-course-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dash-course-code {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.dash-course-schedule {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.dash-course-bottom {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--text-secondary);
+
+  strong {
+    color: var(--text-primary);
+  }
+}
+
+// AI Plan bar
+.dash-ai-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-radius: 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: border-color 0.15s;
+  gap: 12px;
+
+  &:hover {
+    border-color: var(--accent-indigo);
+  }
+
+  &-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  &-title {
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  &-hint {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  &-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    color: var(--text-muted);
+  }
+}
+
+.dash-ai-loading {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.dash-ai-content {
+  margin-top: -1px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+  background: var(--bg-secondary);
+  max-height: 500px;
+  overflow-y: auto;
+}
