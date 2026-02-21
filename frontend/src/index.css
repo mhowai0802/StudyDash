@@ -856,6 +856,227 @@ body {
   background: none;
 }
 
+/* ─── Monthly Calendar ─── */
+
+.calendar-wrapper {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.calendar-nav-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.calendar-nav-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent-indigo);
+}
+
+.calendar-month-label {
+  font-size: 18px;
+  font-weight: 700;
+  min-width: 180px;
+  text-align: center;
+}
+
+.calendar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-primary);
+}
+
+.calendar-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.calendar-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.calendar-grid-header {
+  border-bottom: 1px solid var(--border);
+}
+
+.calendar-weekday {
+  padding: 10px 0;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+.calendar-grid-days {
+  /* rows will auto-fill */
+}
+
+.calendar-day {
+  min-height: 100px;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 6px;
+  cursor: pointer;
+  transition: background 0.12s;
+  position: relative;
+}
+
+.calendar-day:nth-child(7n) {
+  border-right: none;
+}
+
+.calendar-day:hover {
+  background: var(--bg-hover);
+}
+
+.calendar-day-outside {
+  opacity: 0.3;
+}
+
+.calendar-day-today {
+  background: rgba(99, 102, 241, 0.04);
+}
+
+.calendar-day-selected {
+  background: rgba(99, 102, 241, 0.08) !important;
+  box-shadow: inset 0 0 0 2px var(--accent-indigo);
+}
+
+.calendar-day-number {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+  padding: 0 2px;
+}
+
+.calendar-today-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--accent-indigo);
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.calendar-day-events {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.calendar-event-pill {
+  padding: 2px 5px;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.calendar-event-pill-text {
+  font-size: 10px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  line-height: 1.4;
+}
+
+.calendar-event-more {
+  font-size: 10px;
+  color: var(--text-muted);
+  padding: 0 5px;
+  font-weight: 500;
+}
+
+.calendar-detail {
+  border-top: 1px solid var(--border);
+  padding: 16px 20px;
+  background: var(--bg-primary);
+}
+
+.calendar-detail-header {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--text-primary);
+}
+
+.calendar-detail-empty {
+  font-size: 13px;
+  color: var(--text-muted);
+  padding: 8px 0;
+}
+
+.calendar-detail-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.calendar-detail-item {
+  padding: 10px 14px;
+  border-radius: 8px;
+}
+
+.calendar-detail-item-type {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+  opacity: 0.8;
+}
+
+.calendar-detail-item-title {
+  font-size: 13px;
+  font-weight: 500;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .sidebar {

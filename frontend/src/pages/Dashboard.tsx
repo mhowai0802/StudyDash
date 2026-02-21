@@ -5,13 +5,13 @@ import {
   Calendar,
   Trophy,
   Zap,
-  AlertTriangle,
   ArrowRight,
   Sparkles,
 } from "lucide-react";
 import { getCourses, getDeadlines, getStats, aiStudyPlan } from "../api/client";
 import type { Course, Deadline, Stats } from "../types";
 import ProgressRing from "../components/ProgressRing";
+import MonthlyCalendar from "../components/MonthlyCalendar";
 import ReactMarkdown from "react-markdown";
 
 interface DashboardProps {
@@ -32,11 +32,6 @@ export default function Dashboard({ onStatsUpdate }: DashboardProps) {
     getStats().then(setStats);
   }, []);
 
-  const upcomingDeadlines = deadlines
-    .filter((d) => !d.done)
-    .sort((a, b) => a.date.localeCompare(b.date))
-    .slice(0, 5);
-
   const handleGeneratePlan = async () => {
     setLoadingPlan(true);
     try {
@@ -48,8 +43,6 @@ export default function Dashboard({ onStatsUpdate }: DashboardProps) {
     setLoadingPlan(false);
   };
 
-  const today = new Date().toISOString().split("T")[0];
-
   return (
     <div>
       <div className="page-header">
@@ -59,7 +52,7 @@ export default function Dashboard({ onStatsUpdate }: DashboardProps) {
         </p>
       </div>
 
-      {/* Quick Stats */}
+      {/* Quick Stats Row */}
       {stats && (
         <div className="card-grid card-grid-3" style={{ marginBottom: 24 }}>
           <div className="card" style={{ display: "flex", alignItems: "center", gap: 16 }}>
@@ -102,84 +95,59 @@ export default function Dashboard({ onStatsUpdate }: DashboardProps) {
         </div>
       )}
 
-      {/* Course Cards */}
-      <div className="card-grid card-grid-3" style={{ marginBottom: 24 }}>
-        {courses.map((c) => {
-          const progress =
-            c.total_materials && c.completed_materials != null
-              ? Math.round((c.completed_materials / c.total_materials) * 100)
-              : 0;
-          return (
-            <div
-              key={c.id}
-              className="card course-card"
-              style={{ borderTopColor: c.color }}
-              onClick={() => nav(`/course/${c.id}`)}
-            >
-              <div className="course-card-header">
-                <div>
-                  <div className="course-card-name">{c.code}</div>
-                  <div className="course-card-schedule">{c.schedule}</div>
-                </div>
-                <ProgressRing progress={progress} size={56} strokeWidth={5} color={c.color} />
-              </div>
-              <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 8 }}>
-                {c.instructor}
-              </div>
-              <div className="course-card-stats">
-                <div className="course-card-stat">
-                  <strong>{c.completed_materials || 0}</strong>/{c.total_materials || 0} materials
-                </div>
-                <div className="course-card-stat">
-                  <strong>{c.total_weeks}</strong> weeks
-                </div>
-              </div>
-            </div>
-          );
-        })}
+      {/* Monthly Calendar */}
+      <div style={{ marginBottom: 24 }}>
+        <MonthlyCalendar courses={courses} deadlines={deadlines} />
       </div>
 
-      <div className="card-grid card-grid-2">
-        {/* Upcoming Deadlines */}
-        <div className="card">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-            <h3 style={{ fontSize: 16, fontWeight: 700 }}>Upcoming Deadlines</h3>
-            <button className="btn btn-sm btn-secondary" onClick={() => nav("/deadlines")}>
-              View All <ArrowRight size={14} />
-            </button>
-          </div>
-          {upcomingDeadlines.map((d) => (
-            <div key={d.id} className="deadline-item">
-              <div>
-                {d.date < today ? (
-                  <AlertTriangle size={16} color="var(--accent-rose)" />
-                ) : (
-                  <Calendar size={16} color="var(--text-muted)" />
-                )}
-              </div>
-              <div className="deadline-info">
-                <div className="deadline-title">{d.title}</div>
-                <div className="deadline-meta">
-                  <span>{new Date(d.date + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</span>
-                  <span>{d.weight}</span>
+      {/* Bottom row: Course cards + AI Study Plan */}
+      <div className="card-grid card-grid-2" style={{ marginBottom: 24 }}>
+        {/* Course summary cards stacked */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {courses.map((c) => {
+            const progress =
+              c.total_materials && c.completed_materials != null
+                ? Math.round((c.completed_materials / c.total_materials) * 100)
+                : 0;
+            return (
+              <div
+                key={c.id}
+                className="card course-card"
+                style={{ borderTopColor: c.color }}
+                onClick={() => nav(`/course/${c.id}`)}
+              >
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                      <span style={{ width: 10, height: 10, borderRadius: "50%", background: c.color, flexShrink: 0 }} />
+                      <span style={{ fontSize: 15, fontWeight: 700 }}>{c.code}</span>
+                      <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{c.schedule}</span>
+                    </div>
+                    <div className="course-card-stats" style={{ borderTop: "none", paddingTop: 0, marginTop: 0 }}>
+                      <div className="course-card-stat">
+                        <strong>{c.completed_materials || 0}</strong>/{c.total_materials || 0} materials
+                      </div>
+                      <div className="course-card-stat">
+                        <strong>{c.total_weeks}</strong> weeks
+                      </div>
+                    </div>
+                  </div>
+                  <ProgressRing progress={progress} size={48} strokeWidth={4} color={c.color} />
                 </div>
               </div>
-              {d.urgency && (
-                <span className={`urgency-badge urgency-${d.urgency}`}>
-                  {d.urgency === "overdue" ? "OVERDUE" : d.urgency.replace("_", " ").toUpperCase()}
-                </span>
-              )}
-            </div>
-          ))}
-          {upcomingDeadlines.length === 0 && (
-            <div style={{ padding: 20, textAlign: "center", color: "var(--text-muted)" }}>
-              All caught up!
-            </div>
-          )}
+            );
+          })}
+          <button
+            className="btn btn-secondary"
+            style={{ width: "100%", justifyContent: "center" }}
+            onClick={() => nav("/deadlines")}
+          >
+            <Calendar size={16} /> View All Deadlines <ArrowRight size={14} />
+          </button>
         </div>
 
         {/* AI Study Plan */}
-        <div className="card">
+        <div className="card" style={{ alignSelf: "start" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
             <h3 style={{ fontSize: 16, fontWeight: 700 }}>
               <Sparkles size={16} style={{ marginRight: 6, verticalAlign: "middle" }} />
