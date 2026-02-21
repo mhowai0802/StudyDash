@@ -20,6 +20,7 @@ import {
   uploadMaterial,
   deleteMaterial,
   toggleMaterial,
+  assignMaterialWeek,
   aiQuiz,
   aiSummarize,
   aiExplain,
@@ -233,12 +234,12 @@ export default function CoursePage({ onStatsUpdate }: CoursePageProps) {
             </div>
           </div>
           <div className="material-list">
-            {course.materials.map((m) => {
+            {course.materials
+              .slice()
+              .sort((a, b) => a.week - b.week)
+              .map((m) => {
               const done = isCompleted(m.id);
               const Icon = TYPE_ICONS[m.type] || FileText;
-              const weekLabel = m.week > 0
-                ? course.weeks.find((w) => w.week === m.week)?.topic || `Week ${m.week}`
-                : "Unassigned";
               return (
                 <div key={m.id} className={`material-item ${done ? "completed" : ""}`}>
                   <div
@@ -251,9 +252,23 @@ export default function CoursePage({ onStatsUpdate }: CoursePageProps) {
                   <span className={`material-title ${done ? "done" : ""}`}>
                     {m.title || m.file_name || "Untitled"}
                   </span>
-                  <span style={{ fontSize: 11, color: "var(--text-muted)", whiteSpace: "nowrap" }}>
-                    {weekLabel}
-                  </span>
+                  <select
+                    className="form-select"
+                    style={{ flex: "none", width: "auto", minWidth: 130, fontSize: 11, padding: "4px 8px" }}
+                    value={m.week}
+                    onChange={async (e) => {
+                      await assignMaterialWeek(m.id, parseInt(e.target.value));
+                      reload();
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <option value={0}>Unassigned</option>
+                    {course.weeks.map((w) => (
+                      <option key={w.week} value={w.week}>
+                        W{w.week}: {w.topic.length > 25 ? w.topic.slice(0, 25) + "..." : w.topic}
+                      </option>
+                    ))}
+                  </select>
                   <span className="material-type">{m.type.replace("_", " ")}</span>
                   <span className="material-xp">+{m.xp} XP</span>
                   <div className="material-actions">

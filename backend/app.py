@@ -235,6 +235,72 @@ def scan_materials():
     return jsonify({"new_materials": new_count})
 
 
+@app.route("/api/materials/<material_id>/week", methods=["PATCH"])
+def assign_material_week(material_id):
+    """Assign a material to a specific week."""
+    material = Material.query.get(material_id)
+    if not material:
+        return jsonify({"error": "Not found"}), 404
+    body = request.json
+    material.week = body.get("week", 0)
+    db.session.commit()
+    return jsonify(material.to_dict())
+
+
+@app.route("/api/materials/auto-map", methods=["POST"])
+def auto_map_materials():
+    """Auto-assign materials to weeks based on filename patterns."""
+    import re as re_mod
+
+    NLP_MAP = [
+        (r"about.this.course|course.info", 1),
+        (r"lecture\s*1|introduction", 1),
+        (r"lecture\s*2|text.preprocess", 2),
+        (r"lecture\s*3|slm|statistical.lang", 3),
+        (r"lecture\s*4|syntactic", 4),
+        (r"lab\s*1|lab1", 5),
+        (r"lecture\s*5|embedding", 6),
+        (r"lecture\s*6|dl|deep.learn|neural.network", 7),
+        (r"lab\s*2|lab2", 9),
+        (r"lab\s*3|lab3|corpus", 11),
+        (r"group.project|project.desc", 13),
+    ]
+
+    CVPR_MAP = [
+        (r"chapter\s*1|ch1", 1),
+        (r"chapter\s*2.*part\s*1|ch2.*p1", 2),
+        (r"chapter\s*2.*part\s*2|ch2.*p2", 3),
+        (r"chapter\s*2.*part\s*3|ch2.*p3", 4),
+        (r"chapter\s*3|ch3|project.brief", 5),
+        (r"quiz\s*1|quiz1", 5),
+        (r"lab\s*1|lab1", 2),
+        (r"lab\s*2|lab2", 3),
+        (r"lab\s*3|lab3", 4),
+        (r"lab\s*4|lab4", 7),
+        (r"lab\s*5|lab5", 8),
+        (r"lab\s*6|lab6", 9),
+        (r"lab\s*7|lab7", 10),
+    ]
+
+    COURSE_MAPS = {"nlp": NLP_MAP, "cvpr": CVPR_MAP}
+    mapped = 0
+
+    for course_id, rules in COURSE_MAPS.items():
+        materials = Material.query.filter_by(course_id=course_id).all()
+        for mat in materials:
+            if mat.week and mat.week > 0:
+                continue
+            fname = (mat.file_name or mat.title or "").lower()
+            for pattern, week_num in rules:
+                if re_mod.search(pattern, fname):
+                    mat.week = week_num
+                    mapped += 1
+                    break
+
+    db.session.commit()
+    return jsonify({"mapped": mapped})
+
+
 # ─── Deadline Routes ───
 
 

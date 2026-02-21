@@ -55,6 +55,9 @@ export const aiExplain = (topic: string, courseId: string) =>
 export const aiStudyPlan = () =>
   api.post("/ai/study-plan").then((r) => r.data);
 
+export const assignMaterialWeek = (id: string, week: number) =>
+  api.patch(`/materials/${id}/week`, { week }).then((r) => r.data);
+
 export const getStudyTasks = () =>
   api
     .get<{ tasks: StudyTask[]; categories: TaskCategories }>("/study-tasks")
