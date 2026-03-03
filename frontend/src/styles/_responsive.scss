@@ -1,7 +1,6 @@
 // Tablet / narrow desktop
 @media (max-width: 1100px) {
   .calendar-day {
-    min-height: 80px;
     padding: 4px;
   }
 
@@ -116,8 +115,11 @@
   }
 
   // Calendar compact
+  .calendar-grid-days {
+    max-height: clamp(220px, 50vh, 400px);
+  }
+
   .calendar-day {
-    min-height: 60px;
     padding: 3px;
 
     &-events {
@@ -242,7 +244,6 @@
   }
 
   .calendar-day {
-    min-height: 44px;
     padding: 2px;
 
     &-number {

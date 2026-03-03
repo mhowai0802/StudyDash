@@ -3,7 +3,6 @@ import type {
   Course,
   CourseDetail,
   Deadline,
-  Stats,
   Material,
   ChatEntry,
   StudyTask,
@@ -22,8 +21,6 @@ export const getDeadlines = () =>
 
 export const toggleDeadline = (id: string) =>
   api.patch<Deadline>(`/deadlines/${id}/toggle`).then((r) => r.data);
-
-export const getStats = () => api.get<Stats>("/stats").then((r) => r.data);
 
 export const uploadMaterial = (formData: FormData) =>
   api.post<Material>("/materials", formData).then((r) => r.data);
@@ -80,5 +77,26 @@ export const addStudyTask = (task: {
   category: string;
 }) => api.post<StudyTask>("/study-tasks", task).then((r) => r.data);
 
+export const updateStudyTask = (
+  id: string,
+  updates: Partial<{ date: string; title: string; hours: number; category: string; course_id: string }>
+) => api.patch<StudyTask>(`/study-tasks/${id}`, updates).then((r) => r.data);
+
 export const deleteStudyTask = (id: string) =>
   api.delete(`/study-tasks/${id}`).then((r) => r.data);
+
+export interface ApiSettings {
+  api_key: string;
+  base_url: string;
+  model: string;
+  api_version: string;
+}
+
+export const getSettings = () =>
+  api.get<ApiSettings>("/settings").then((r) => r.data);
+
+export const updateSettings = (settings: Partial<ApiSettings>) =>
+  api.put("/settings", settings).then((r) => r.data);
+
+export const testSettings = () =>
+  api.post<{ ok: boolean; message: string }>("/settings/test").then((r) => r.data);

@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { ChevronLeft, ChevronRight, Check, Plus, Trash2, Clock, FileText, ExternalLink } from "lucide-react";
+import { useState, useMemo, useRef } from "react";
+import { ChevronLeft, ChevronRight, Check, Plus, Trash2, Clock, FileText, ExternalLink, CalendarDays } from "lucide-react";
 import type { Course, Deadline, StudyTask, TaskCategories, Material } from "../types";
 
 interface CalendarEvent {
@@ -19,6 +19,7 @@ interface MonthlyCalendarProps {
   onToggleTask: (id: string) => void;
   onAddTask: (task: { date: string; course_id: string; title: string; hours: number; category: string }) => void;
   onDeleteTask: (id: string) => void;
+  onUpdateTask: (id: string, updates: Partial<{ date: string; title: string; hours: number; category: string; course_id: string }>) => void;
 }
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -131,6 +132,7 @@ export default function MonthlyCalendar({
   onToggleTask,
   onAddTask,
   onDeleteTask,
+  onUpdateTask,
 }: MonthlyCalendarProps) {
   const today = new Date();
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
@@ -141,6 +143,8 @@ export default function MonthlyCalendar({
   const [newCourse, setNewCourse] = useState("");
   const [newHours, setNewHours] = useState("1");
   const [newCategory, setNewCategory] = useState("review");
+  const [rescheduleTaskId, setRescheduleTaskId] = useState<string | null>(null);
+  const dateInputRef = useRef<HTMLInputElement>(null);
 
   const courseColorMap = useMemo(() => {
     const m: Record<string, string> = {};
@@ -314,7 +318,7 @@ export default function MonthlyCalendar({
               </div>
               {/* Full pills (hidden on mobile via CSS) */}
               <div className="calendar-day-events">
-                {dayEvents.slice(0, 2).map((ev) => (
+                {dayEvents.map((ev) => (
                   <div
                     key={ev.id}
                     className="calendar-event-pill"
@@ -324,7 +328,7 @@ export default function MonthlyCalendar({
                     <span className="calendar-event-pill-text">{ev.title}</span>
                   </div>
                 ))}
-                {dayTasks.slice(0, 2).map((t) => {
+                {dayTasks.map((t) => {
                   const catColor = taskCategories[t.category]?.color || "#22d3ee";
                   return (
                     <div
@@ -337,9 +341,6 @@ export default function MonthlyCalendar({
                     </div>
                   );
                 })}
-                {allItems.length > 4 && (
-                  <div className="calendar-event-more">+{allItems.length - 4} more</div>
-                )}
               </div>
               {/* Compact dot indicators (visible on mobile only) */}
               {(dayEvents.length > 0 || dayTasks.length > 0) && (
@@ -439,7 +440,7 @@ export default function MonthlyCalendar({
                     <div
                       key={t.id}
                       className="calendar-task-detail-item"
-                      style={{ borderLeft: `4px solid ${catColor}`, opacity: t.done ? 0.6 : 1 }}
+                      style={{ borderLeft: `4px solid ${catColor}`, opacity: t.done ? 0.6 : 1, position: "relative" }}
                     >
                       <div
                         className={`calendar-task-check ${t.done ? "done" : ""}`}
@@ -488,13 +489,62 @@ export default function MonthlyCalendar({
                           );
                         })()}
                       </div>
-                      <button
-                        className="calendar-task-delete"
-                        onClick={(e) => { e.stopPropagation(); onDeleteTask(t.id); }}
-                        title="Delete task"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "center" }}>
+                        <button
+                          className="calendar-task-delete"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setRescheduleTaskId(rescheduleTaskId === t.id ? null : t.id);
+                            setTimeout(() => dateInputRef.current?.showPicker?.(), 50);
+                          }}
+                          title="Reschedule task"
+                          style={{ color: "var(--text-muted)" }}
+                        >
+                          <CalendarDays size={14} />
+                        </button>
+                        <button
+                          className="calendar-task-delete"
+                          onClick={(e) => { e.stopPropagation(); onDeleteTask(t.id); }}
+                          title="Delete task"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                      {rescheduleTaskId === t.id && (
+                        <div
+                          style={{
+                            position: "absolute", right: 0, top: "100%", zIndex: 20,
+                            background: "var(--bg-card)", border: "1px solid var(--border)",
+                            borderRadius: 8, padding: 10, boxShadow: "0 4px 16px rgba(0,0,0,0.18)",
+                            display: "flex", flexDirection: "column", gap: 6, minWidth: 180,
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <label style={{ fontSize: 11, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" }}>
+                            Move to date
+                          </label>
+                          <input
+                            ref={dateInputRef}
+                            type="date"
+                            defaultValue={t.date}
+                            className="form-input"
+                            style={{ fontSize: 13 }}
+                            onChange={(e) => {
+                              if (e.target.value && e.target.value !== t.date) {
+                                onUpdateTask(t.id, { date: e.target.value });
+                                setRescheduleTaskId(null);
+                              }
+                            }}
+                          />
+                          <button
+                            className="btn btn-sm btn-secondary"
+                            style={{ fontSize: 11 }}
+                            onClick={() => setRescheduleTaskId(null)}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      )}
                     </div>
                   );
                 })}

@@ -1,32 +1,21 @@
 import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
-  BookOpen,
   CalendarClock,
   Bot,
+  Sparkles,
   Brain,
   Eye,
   Mic,
+  Settings,
 } from "lucide-react";
-import type { Stats } from "../types";
-
-interface SidebarProps {
-  stats: Stats | null;
-}
-
 const courseLinks = [
   { to: "/course/nlp", label: "NLP & LLM", color: "#6366f1", icon: Brain },
   { to: "/course/cvpr", label: "CVPR", color: "#f59e0b", icon: Eye },
   { to: "/course/it-forum", label: "IT Forum", color: "#10b981", icon: Mic },
 ];
 
-export default function Sidebar({ stats }: SidebarProps) {
-  const xpProgress = stats?.level.next
-    ? ((stats.xp - stats.level.current.xp_required) /
-        (stats.level.next.xp_required - stats.level.current.xp_required)) *
-      100
-    : 100;
-
+export default function Sidebar() {
   return (
     <nav className="sidebar">
       <div className="sidebar-logo">StudyDash</div>
@@ -61,6 +50,25 @@ export default function Sidebar({ stats }: SidebarProps) {
         <Bot size={18} />
         <span>AI Assistant</span>
       </NavLink>
+      <NavLink
+        to="/study-plan"
+        className={({ isActive }) =>
+          `sidebar-link ${isActive ? "active" : ""}`
+        }
+      >
+        <Sparkles size={18} />
+        <span>AI Study Plan</span>
+      </NavLink>
+
+      <NavLink
+        to="/settings"
+        className={({ isActive }) =>
+          `sidebar-link ${isActive ? "active" : ""}`
+        }
+      >
+        <Settings size={18} />
+        <span>Settings</span>
+      </NavLink>
 
       <div className="sidebar-section">Courses</div>
       {courseLinks.map((c) => (
@@ -76,25 +84,6 @@ export default function Sidebar({ stats }: SidebarProps) {
         </NavLink>
       ))}
 
-      {stats && (
-        <div className="xp-card">
-          <div className="xp-card-level">
-            Level {stats.level.current.level}
-          </div>
-          <div className="xp-card-title">{stats.level.current.name}</div>
-          <div className="xp-bar-bg">
-            <div
-              className="xp-bar-fill"
-              style={{ width: `${Math.min(xpProgress, 100)}%` }}
-            />
-          </div>
-          <div className="xp-bar-text">
-            {stats.xp} XP
-            {stats.level.next &&
-              ` / ${stats.level.next.xp_required} XP to ${stats.level.next.name}`}
-          </div>
-        </div>
-      )}
     </nav>
   );
 }

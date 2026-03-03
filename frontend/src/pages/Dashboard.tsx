@@ -3,45 +3,31 @@ import { useNavigate } from "react-router-dom";
 import {
   BookOpen,
   Calendar,
-  Trophy,
-  Zap,
   ArrowRight,
-  Sparkles,
   CheckCircle,
   Clock,
-  ChevronDown,
-  ChevronUp,
 } from "lucide-react";
 import {
   getCourses,
   getCourse,
   getDeadlines,
-  getStats,
   getStudyTasks,
   toggleStudyTask,
   addStudyTask,
   deleteStudyTask,
-  aiStudyPlan,
+  updateStudyTask,
 } from "../api/client";
-import type { Course, Deadline, Stats, StudyTask, TaskCategories, Material } from "../types";
+import type { Course, Deadline, StudyTask, TaskCategories, Material } from "../types";
 import ProgressRing from "../components/ProgressRing";
 import MonthlyCalendar from "../components/MonthlyCalendar";
-import ReactMarkdown from "react-markdown";
 
-interface DashboardProps {
-  onStatsUpdate: () => void;
-}
 
-export default function Dashboard({ onStatsUpdate }: DashboardProps) {
+export default function Dashboard() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [deadlines, setDeadlines] = useState<Deadline[]>([]);
-  const [stats, setStats] = useState<Stats | null>(null);
   const [studyTasks, setStudyTasks] = useState<StudyTask[]>([]);
   const [taskCategories, setTaskCategories] = useState<TaskCategories>({});
   const [allMaterials, setAllMaterials] = useState<Material[]>([]);
-  const [studyPlan, setStudyPlan] = useState<string>("");
-  const [loadingPlan, setLoadingPlan] = useState(false);
-  const [showAIPlan, setShowAIPlan] = useState(false);
   const nav = useNavigate();
 
   const reload = useCallback(() => {
@@ -54,7 +40,6 @@ export default function Dashboard({ onStatsUpdate }: DashboardProps) {
       });
     });
     getDeadlines().then(setDeadlines);
-    getStats().then(setStats);
     getStudyTasks().then((data) => {
       setStudyTasks(data.tasks);
       setTaskCategories(data.categories);
@@ -66,7 +51,6 @@ export default function Dashboard({ onStatsUpdate }: DashboardProps) {
   const handleToggleTask = async (id: string) => {
     await toggleStudyTask(id);
     reload();
-    onStatsUpdate();
   };
 
   const handleAddTask = async (task: { date: string; course_id: string; title: string; hours: number; category: string }) => {
@@ -79,16 +63,9 @@ export default function Dashboard({ onStatsUpdate }: DashboardProps) {
     reload();
   };
 
-  const handleGeneratePlan = async () => {
-    setLoadingPlan(true);
-    setShowAIPlan(true);
-    try {
-      const result = await aiStudyPlan();
-      setStudyPlan(result.plan);
-    } catch {
-      setStudyPlan("Could not generate study plan. Make sure the backend is running.");
-    }
-    setLoadingPlan(false);
+  const handleUpdateTask = async (id: string, updates: Partial<{ date: string; title: string; hours: number; category: string; course_id: string }>) => {
+    await updateStudyTask(id, updates);
+    reload();
   };
 
   const todayKey = new Date().toISOString().split("T")[0];
@@ -105,13 +82,6 @@ export default function Dashboard({ onStatsUpdate }: DashboardProps) {
           <p className="dash-subtitle">Your study command center</p>
         </div>
         <div className="dash-stats-row">
-          {stats && (
-            <div className="dash-stat">
-              <Trophy size={16} color="var(--accent-indigo)" />
-              <span className="dash-stat-value">{stats.xp}</span>
-              <span className="dash-stat-label">XP</span>
-            </div>
-          )}
           <div className="dash-stat">
             <CheckCircle size={16} color="#22d3ee" />
             <span className="dash-stat-value">{todayDone}/{todayTasks.length}</span>
@@ -122,13 +92,6 @@ export default function Dashboard({ onStatsUpdate }: DashboardProps) {
               <Clock size={16} color="var(--accent-amber)" />
               <span className="dash-stat-value">{todayHours}h</span>
               <span className="dash-stat-label">Planned</span>
-            </div>
-          )}
-          {stats && (
-            <div className="dash-stat">
-              <BookOpen size={16} color="var(--accent-emerald)" />
-              <span className="dash-stat-value">{stats.completed_materials}/{stats.total_materials}</span>
-              <span className="dash-stat-label">Materials</span>
             </div>
           )}
         </div>
@@ -145,6 +108,7 @@ export default function Dashboard({ onStatsUpdate }: DashboardProps) {
           onToggleTask={handleToggleTask}
           onAddTask={handleAddTask}
           onDeleteTask={handleDeleteTask}
+          onUpdateTask={handleUpdateTask}
         />
       </section>
 
@@ -188,46 +152,6 @@ export default function Dashboard({ onStatsUpdate }: DashboardProps) {
         </div>
       </section>
 
-      {/* AI Study Plan - collapsible */}
-      <section className="dash-section">
-        <div className="dash-ai-bar" onClick={() => !studyPlan && !loadingPlan ? handleGeneratePlan() : setShowAIPlan(!showAIPlan)}>
-          <div className="dash-ai-bar-left">
-            <Sparkles size={18} color="var(--accent-indigo)" />
-            <span className="dash-ai-bar-title">AI Study Plan</span>
-            {!studyPlan && !loadingPlan && (
-              <span className="dash-ai-bar-hint">Click to generate a personalized plan</span>
-            )}
-          </div>
-          <div className="dash-ai-bar-right">
-            {!studyPlan && !loadingPlan && (
-              <button className="btn btn-sm btn-primary" onClick={(e) => { e.stopPropagation(); handleGeneratePlan(); }}>
-                <Zap size={14} /> Generate
-              </button>
-            )}
-            {loadingPlan && (
-              <span className="dash-ai-loading">
-                <span className="spinner" style={{ width: 14, height: 14, borderWidth: 2, marginRight: 6 }} />
-                Generating...
-              </span>
-            )}
-            {studyPlan && !loadingPlan && (
-              <>
-                <button className="btn btn-sm btn-secondary" onClick={(e) => { e.stopPropagation(); handleGeneratePlan(); }}>
-                  <Zap size={14} /> Regenerate
-                </button>
-                {showAIPlan ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-              </>
-            )}
-          </div>
-        </div>
-        {showAIPlan && studyPlan && (
-          <div className="dash-ai-content">
-            <div className="ai-content">
-              <ReactMarkdown>{studyPlan}</ReactMarkdown>
-            </div>
-          </div>
-        )}
-      </section>
     </div>
   );
 }

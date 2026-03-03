@@ -64,30 +64,6 @@ export interface Deadline {
   urgency?: string;
 }
 
-export interface Level {
-  level: number;
-  name: string;
-  xp_required: number;
-}
-
-export interface Stats {
-  xp: number;
-  level: {
-    current: Level;
-    next: Level | null;
-    xp: number;
-    xp_to_next: number;
-  };
-  total_materials: number;
-  completed_materials: number;
-  material_progress: number;
-  total_deadlines: number;
-  completed_deadlines: number;
-  per_course: Record<string, { name: string; total: number; completed: number; progress: number }>;
-  xp_values: Record<string, number>;
-  levels: Level[];
-}
-
 export interface ChatEntry {
   id: string;
   course_id: string;

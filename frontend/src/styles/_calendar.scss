@@ -79,6 +79,11 @@
   &-header {
     border-bottom: 1px solid var(--border);
   }
+
+  &-days {
+    grid-auto-rows: 1fr;
+    max-height: clamp(300px, 60vh, 700px);
+  }
 }
 
 .calendar-weekday {
@@ -93,13 +98,16 @@
 
 // Day cells
 .calendar-day {
-  min-height: 100px;
+  min-height: 0;
   border-right: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
   padding: 6px;
   cursor: pointer;
   transition: background 0.12s;
   position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 
   &:nth-child(7n) {
     border-right: none;
@@ -123,21 +131,32 @@
   }
 
   &-number {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 500;
     color: var(--text-secondary);
-    margin-bottom: 4px;
+    margin-bottom: 2px;
     padding: 0 2px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-shrink: 0;
   }
 
   &-events {
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    overflow: hidden;
+    gap: 1px;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+
+    &::-webkit-scrollbar {
+      width: 3px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 3px;
+    }
   }
 
   &-dots {
@@ -172,26 +191,20 @@
 // Event pills
 .calendar-event {
   &-pill {
-    padding: 2px 5px;
+    padding: 1px 4px;
     border-radius: 3px;
     overflow: hidden;
+    flex-shrink: 0;
 
     &-text {
-      font-size: 10px;
+      font-size: 9px;
       font-weight: 500;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       display: block;
-      line-height: 1.4;
+      line-height: 1.35;
     }
-  }
-
-  &-more {
-    font-size: 10px;
-    color: var(--text-muted);
-    padding: 0 5px;
-    font-weight: 500;
   }
 }
 

@@ -11,9 +11,8 @@ from PyPDF2 import PdfReader
 
 from database import (
     db, Course, Week, Deadline, StudyTask, Material,
-    ChatHistory, UserStats, seed_from_initial_data, migrate_from_json,
+    ChatHistory, seed_from_initial_data, migrate_from_json,
 )
-from course_data import XP_VALUES, LEVELS
 from study_plan_data import TASK_CATEGORIES
 from project_data import COURSE_PROJECTS
 
@@ -42,35 +41,6 @@ with app.app_context():
         seed_from_initial_data(app)
 
 
-def get_xp():
-    stats = UserStats.query.get(1)
-    return stats.xp if stats else 0
-
-
-def set_xp(val):
-    stats = UserStats.query.get(1)
-    if not stats:
-        stats = UserStats(id=1, xp=val)
-        db.session.add(stats)
-    else:
-        stats.xp = val
-    db.session.commit()
-
-
-def get_level(xp):
-    current = LEVELS[0]
-    for lvl in LEVELS:
-        if xp >= lvl["xp_required"]:
-            current = lvl
-    next_lvl = None
-    for lvl in LEVELS:
-        if lvl["xp_required"] > xp:
-            next_lvl = lvl
-            break
-    return {
-        "current": current, "next": next_lvl, "xp": xp,
-        "xp_to_next": next_lvl["xp_required"] - xp if next_lvl else 0,
-    }
 
 
 # ─── Course Routes ───
@@ -145,7 +115,6 @@ def add_material():
         id=mat_id, course_id=course_id,
         week=int(request.form.get("week", 0)),
         title=title, type=mat_type,
-        xp=XP_VALUES.get(mat_type, 10),
         created_at=datetime.now().isoformat(),
     )
 
@@ -172,9 +141,6 @@ def delete_material(material_id):
         return jsonify({"error": "Not found"}), 404
     if material.file_path and os.path.exists(material.file_path):
         os.remove(material.file_path)
-    if material.completed:
-        xp = get_xp()
-        set_xp(max(0, xp - material.xp))
     db.session.delete(material)
     db.session.commit()
     return jsonify({"ok": True})
@@ -186,24 +152,9 @@ def toggle_material_complete(material_id):
     if not material:
         return jsonify({"error": "Not found"}), 404
 
-    xp = get_xp()
-    if material.completed:
-        material.completed = False
-        xp -= material.xp
-    else:
-        material.completed = True
-        xp += material.xp
-        week_mats = Material.query.filter_by(
-            course_id=material.course_id, week=material.week
-        ).all()
-        if all(m.completed or m.id == material_id for m in week_mats) and len(week_mats) > 0:
-            xp += XP_VALUES["week_complete_bonus"]
-
-    set_xp(max(0, xp))
+    material.completed = not material.completed
     db.session.commit()
-    return jsonify({
-        "completed": material.completed, "xp": get_xp(), "level": get_level(get_xp()),
-    })
+    return jsonify({"completed": material.completed})
 
 
 @app.route("/api/materials/file/<path:filepath>", methods=["GET"])
@@ -248,7 +199,6 @@ def scan_materials():
             material = Material(
                 id=str(uuid.uuid4()), course_id=course_id, week=0,
                 title=file_path.stem, type=mat_type,
-                xp=XP_VALUES.get(mat_type, 10),
                 file_path=str_path, file_name=file_path.name,
                 created_at=datetime.now().isoformat(),
             )
@@ -364,35 +314,6 @@ def toggle_deadline(deadline_id):
 # ─── Stats ───
 
 
-@app.route("/api/stats", methods=["GET"])
-def get_stats():
-    xp = get_xp()
-    all_mats = Material.query.all()
-    completed_mats = [m for m in all_mats if m.completed]
-    all_deadlines = Deadline.query.all()
-    done_deadlines = [d for d in all_deadlines if d.done]
-
-    per_course = {}
-    for course in Course.query.all():
-        cm = [m for m in all_mats if m.course_id == course.id]
-        cc = [m for m in cm if m.completed]
-        per_course[course.id] = {
-            "name": course.name, "total": len(cm), "completed": len(cc),
-            "progress": round(len(cc) / len(cm) * 100) if cm else 0,
-        }
-
-    return jsonify({
-        "xp": xp, "level": get_level(xp),
-        "total_materials": len(all_mats),
-        "completed_materials": len(completed_mats),
-        "material_progress": round(len(completed_mats) / len(all_mats) * 100) if all_mats else 0,
-        "total_deadlines": len(all_deadlines),
-        "completed_deadlines": len(done_deadlines),
-        "per_course": per_course,
-        "xp_values": XP_VALUES, "levels": LEVELS,
-    })
-
-
 # ─── Study Tasks ───
 
 
@@ -426,6 +347,19 @@ def add_study_task():
     db.session.add(task)
     db.session.commit()
     return jsonify(task.to_dict()), 201
+
+
+@app.route("/api/study-tasks/<task_id>", methods=["PATCH"])
+def update_study_task(task_id):
+    task = StudyTask.query.get(task_id)
+    if not task:
+        return jsonify({"error": "Not found"}), 404
+    body = request.json
+    for field in ("date", "title", "hours", "category", "course_id"):
+        if field in body:
+            setattr(task, field, body[field])
+    db.session.commit()
+    return jsonify(task.to_dict())
 
 
 @app.route("/api/study-tasks/<task_id>", methods=["DELETE"])
@@ -599,6 +533,54 @@ def ai_study_plan():
     ]
     plan = call_ai(messages, max_tokens=1500)
     return jsonify({"plan": plan, "generated_at": today_str})
+
+
+# ─── Settings ───
+
+ENV_PATH = Path(__file__).parent / ".env"
+
+@app.route("/api/settings", methods=["GET"])
+def get_settings():
+    return jsonify({
+        "api_key": os.getenv("HKBU_API_KEY", ""),
+        "base_url": os.getenv("HKBU_BASE_URL", ""),
+        "model": os.getenv("HKBU_MODEL", "gpt-4.1"),
+        "api_version": os.getenv("HKBU_API_VERSION", "2024-12-01-preview"),
+    })
+
+
+@app.route("/api/settings", methods=["PUT"])
+def update_settings():
+    body = request.json
+    mapping = {
+        "api_key": "HKBU_API_KEY",
+        "base_url": "HKBU_BASE_URL",
+        "model": "HKBU_MODEL",
+        "api_version": "HKBU_API_VERSION",
+    }
+    for field, env_var in mapping.items():
+        if field in body:
+            os.environ[env_var] = body[field]
+
+    lines = []
+    for field, env_var in mapping.items():
+        lines.append(f"{env_var}={os.getenv(env_var, '')}")
+    ENV_PATH.write_text("\n".join(lines) + "\n")
+
+    return jsonify({"ok": True})
+
+
+@app.route("/api/settings/test", methods=["POST"])
+def test_settings():
+    try:
+        reply = call_ai(
+            [{"role": "user", "content": "Say 'API connection successful' in one short sentence."}],
+            temperature=0, max_tokens=30,
+        )
+        is_error = reply.startswith("AI Error")
+        return jsonify({"ok": not is_error, "message": reply})
+    except Exception as e:
+        return jsonify({"ok": False, "message": str(e)})
 
 
 if __name__ == "__main__":

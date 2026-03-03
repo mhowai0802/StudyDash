@@ -1,29 +1,43 @@
 on run
 	set projectDir to "/Users/waiwai/Desktop/Plan"
-	set backendCmd to "cd " & projectDir & "/backend && ./venv/bin/python app.py > /dev/null 2>&1 &"
-	set frontendCmd to "export PATH=/opt/homebrew/bin:$PATH && cd " & projectDir & "/frontend && npm run dev > /dev/null 2>&1 &"
+	set launcherScript to projectDir & "/start-app.sh"
 
-	set backendRunning to (do shell script "lsof -ti:5001 2>/dev/null || echo ''")
+	set backendRunning to do shell script "lsof -ti:5001 2>/dev/null || true"
 
 	if backendRunning is "" then
-		-- Start both servers
-		do shell script backendCmd
-		do shell script frontendCmd
+		-- Not running: start everything
+		try
+			do shell script "bash " & quoted form of launcherScript & " 2>&1"
+		on error errMsg
+			display dialog "Failed to start StudyDash:" & return & return & errMsg buttons {"OK"} default button "OK" with title "StudyDash" with icon stop
+			return
+		end try
 
-		-- Wait for servers to be ready
-		delay 3
+		-- Wait for backend to be ready (poll up to 15 seconds)
+		set ready to false
+		repeat 15 times
+			try
+				do shell script "curl -s -o /dev/null -w '%{http_code}' http://localhost:5001/ 2>/dev/null | grep -q '200\\|404\\|302'"
+				set ready to true
+				exit repeat
+			end try
+			delay 1
+		end repeat
 
-		-- Open browser
+		if not ready then
+			display dialog "Servers are starting but taking longer than expected." & return & "Try opening http://localhost:5173 in your browser manually." buttons {"OK"} default button "OK" with title "StudyDash" with icon caution
+			return
+		end if
+
 		do shell script "open http://localhost:5173"
 
-		-- Show running dialog with Stop button
-		display dialog "StudyDash is now running!" & return & return & "  Backend:   http://localhost:5001" & return & "  Frontend:  http://localhost:5173" & return & return & "The app is open in your browser." & return & "Click Stop when you're done." buttons {"Stop"} default button "Stop" with title "StudyDash" with icon note
+		display dialog "StudyDash is running!" & return & return & "  Backend:   http://localhost:5001" & return & "  Frontend:  http://localhost:5173" & return & return & "The app is open in your browser." & return & "Click Stop when you're done." buttons {"Stop"} default button "Stop" with title "StudyDash" with icon note
 
 		-- User clicked Stop
 		do shell script "kill $(lsof -ti:5001) 2>/dev/null; kill $(lsof -ti:5173) 2>/dev/null; true"
 		display notification "StudyDash servers stopped." with title "StudyDash"
 	else
-		-- Already running - show options
+		-- Already running
 		set choice to button returned of (display dialog "StudyDash is already running!" & return & return & "What would you like to do?" buttons {"Open Browser", "Stop Servers", "Cancel"} default button "Open Browser" with title "StudyDash" with icon note)
 
 		if choice is "Open Browser" then

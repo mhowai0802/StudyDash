@@ -30,9 +30,6 @@ import {
 import type { CourseDetail, Material, QuizQuestion } from "../types";
 import ReactMarkdown from "react-markdown";
 
-interface CoursePageProps {
-  onStatsUpdate: () => void;
-}
 
 const TYPE_ICONS: Record<string, typeof FileText> = {
   lecture_slides: FileText,
@@ -53,7 +50,7 @@ const MATERIAL_TYPES = [
   { value: "other", label: "Other" },
 ];
 
-export default function CoursePage({ onStatsUpdate }: CoursePageProps) {
+export default function CoursePage() {
   const { courseId } = useParams<{ courseId: string }>();
   const [course, setCourse] = useState<CourseDetail | null>(null);
   const [expandedWeek, setExpandedWeek] = useState<number | null>(null);
@@ -101,7 +98,6 @@ export default function CoursePage({ onStatsUpdate }: CoursePageProps) {
   const handleToggle = async (id: string) => {
     await toggleMaterial(id);
     reload();
-    onStatsUpdate();
   };
 
   const handleUpload = async () => {
@@ -125,14 +121,12 @@ export default function CoursePage({ onStatsUpdate }: CoursePageProps) {
     setAddingToWeek(null);
     if (fileRef.current) fileRef.current.value = "";
     reload();
-    onStatsUpdate();
   };
 
   const handleDelete = async (id: string) => {
     if (confirm("Delete this material?")) {
       await deleteMaterial(id);
       reload();
-      onStatsUpdate();
     }
   };
 
