@@ -176,63 +176,18 @@ INITIAL_COURSES = [
                 "has_lab": False, "has_quiz": False, "status": "upcoming"
             }
         ]
-    },
-    {
-        "id": "it-forum",
-        "name": "IT Forum",
-        "code": "IT Forum",
-        "instructor": "Various Speakers",
-        "ta": "",
-        "schedule": "Sat 9:30-11:30 (selected dates)",
-        "venue": "SCT503, HKBU",
-        "color": "#10b981",
-        "assessment": {
-            "continuous": {"weight": 100, "components": [
-                {"name": "Attendance + Report Submission", "weight": 100}
-            ]},
-            "exam": {"weight": 0, "note": "No exam"}
-        },
-        "weeks": [
-            {
-                "week": 1, "date": "2026-01-17", "topic": "AI Agents in Action: Your Path to Cloud Innovation",
-                "details": "Speakers: Diane Long & Lok Yeung (AWS). AWS Intro, GenAI in AWS, AgentCore, AI Use Cases, Kiro, AWS Certificates.",
-                "has_lab": False, "has_quiz": False, "status": "past"
-            },
-            {
-                "week": 2, "date": "2026-01-24", "topic": "IT Professional's Career Development in the AI Era",
-                "details": "Speaker: Raymond Tsang (Alibaba Cloud Global Training Advisor in AI).",
-                "has_lab": False, "has_quiz": False, "status": "past"
-            },
-            {
-                "week": 3, "date": "2026-02-07", "topic": "Cyber Security Operations Trend in 2026",
-                "details": "Speakers: Wilfred CW Leung & Yoga Yujia Tian (HKT). MDR, Next-Gen SOC.",
-                "has_lab": False, "has_quiz": False, "status": "past"
-            },
-            {
-                "week": 4, "date": "2026-02-28", "topic": "Generative AI and Business (Title TBD)",
-                "details": "Speaker: Keith Li (Chairman, WTIA - HK Wireless Technology Industry Association).",
-                "has_lab": False, "has_quiz": False, "status": "upcoming"
-            },
-            {
-                "week": 5, "date": "2026-03-21", "topic": "Robotics and AI (Title TBD)",
-                "details": "Speaker: Albert LAM (Co-Founder, Novelte Robotics).",
-                "has_lab": False, "has_quiz": False, "status": "upcoming"
-            }
-        ]
     }
 ]
 
 INITIAL_DEADLINES = [
     {"id": "nlp-quiz1", "course_id": "nlp", "title": "NLP Quiz 1", "date": "2026-02-23", "weight": "Part of 50% CA", "type": "quiz", "done": False},
     {"id": "cvpr-lab4", "course_id": "cvpr", "title": "CVPR Lab 4 Submission", "date": "2026-02-28", "weight": "~1.4%", "type": "lab", "done": False},
-    {"id": "it-forum-4", "course_id": "it-forum", "title": "IT Forum: Keith Li Talk + Report", "date": "2026-02-28", "weight": "Attendance", "type": "talk", "done": False},
     {"id": "cvpr-labs-overdue", "course_id": "cvpr", "title": "CVPR Labs 1-3 (OVERDUE)", "date": "2026-02-21", "weight": "~4.3%", "type": "lab", "done": False},
     {"id": "cvpr-group", "course_id": "cvpr", "title": "CVPR Project Group Formation (OVERDUE)", "date": "2026-02-19", "weight": "Required", "type": "admin", "done": False},
     {"id": "cvpr-lab5", "course_id": "cvpr", "title": "CVPR Lab 5 Submission", "date": "2026-03-07", "weight": "~1.4%", "type": "lab", "done": False},
     {"id": "cvpr-lab6", "course_id": "cvpr", "title": "CVPR Lab 6 Submission", "date": "2026-03-14", "weight": "~1.4%", "type": "lab", "done": False},
     {"id": "cvpr-lab7", "course_id": "cvpr", "title": "CVPR Lab 7 Submission", "date": "2026-03-21", "weight": "~1.4%", "type": "lab", "done": False},
     {"id": "cvpr-proposal", "course_id": "cvpr", "title": "CVPR Project Proposal", "date": "2026-03-20", "weight": "7% (20% of 35%)", "type": "project", "done": False},
-    {"id": "it-forum-5", "course_id": "it-forum", "title": "IT Forum: Albert LAM Talk + Report", "date": "2026-03-21", "weight": "Attendance", "type": "talk", "done": False},
     {"id": "cvpr-quiz2", "course_id": "cvpr", "title": "CVPR Quiz 2 (DL-based)", "date": "2026-03-26", "weight": "2.5%", "type": "quiz", "done": False},
     {"id": "nlp-quiz2", "course_id": "nlp", "title": "NLP Quiz 2", "date": "2026-03-30", "weight": "Part of 50% CA", "type": "quiz", "done": False},
     {"id": "nlp-report", "course_id": "nlp", "title": "NLP Mini-Project Report", "date": "2026-04-20", "weight": "Part of 50% CA", "type": "project", "done": False},

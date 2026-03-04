@@ -78,7 +78,6 @@ export default function DeadlinesPage() {
           const courseColors: Record<string, string> = {
             nlp: "#6366f1",
             cvpr: "#f59e0b",
-            "it-forum": "#10b981",
           };
           return (
             <div key={d.id} className="deadline-item">

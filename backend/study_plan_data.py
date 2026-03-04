@@ -5,7 +5,6 @@ Replanned on March 1, 2026 — assuming ZERO revision done on any past lectures.
 Current situation:
   - NLP: Weeks 1-6 unreviewed, Quiz 1 is TOMORROW (Mar 2)
   - CVPR: Weeks 1-5 unreviewed, Lab 4 overdue, Week 7 class missed
-  - IT Forum: Keith Li talk missed (Feb 28)
   - No catch-up or revision has been done at all
 """
 
@@ -89,8 +88,6 @@ INITIAL_STUDY_TASKS = [
     {"id": "r040", "date": "2026-03-20", "course_id": "cvpr", "title": "SUBMIT: CVPR Project Proposal via Moodle (DEADLINE)", "hours": 1, "category": "deadline", "done": False},
     {"id": "r041", "date": "2026-03-20", "course_id": "cvpr", "title": "Complete & submit CVPR Lab 7", "hours": 1.5, "category": "lab", "done": False},
 
-    {"id": "r042", "date": "2026-03-21", "course_id": "it-forum", "title": "Attend IT Forum: Albert LAM — Robotics & AI (9:30)", "hours": 2, "category": "attend", "done": False},
-    {"id": "r043", "date": "2026-03-21", "course_id": "it-forum", "title": "Write & submit IT Forum report", "hours": 1.5, "category": "assignment", "done": False},
     {"id": "r044", "date": "2026-03-21", "course_id": "cvpr", "title": "CVPR Quiz 2 prep: review DL for CVPR + Segmentation", "hours": 2, "category": "quiz-prep", "done": False},
 
     {"id": "r045", "date": "2026-03-22", "course_id": "cvpr", "title": "CVPR Quiz 2 prep: Object Detection (YOLO, R-CNN, SSD)", "hours": 3, "category": "quiz-prep", "done": False},

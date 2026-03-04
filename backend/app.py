@@ -4,7 +4,7 @@ from datetime import datetime, date
 from pathlib import Path
 
 import requests as http_requests
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, redirect
 from flask_cors import CORS
 from dotenv import load_dotenv
 from PyPDF2 import PdfReader
@@ -25,18 +25,33 @@ DATA_DIR = Path(__file__).parent / "data"
 MATERIALS_DIR = Path(__file__).parent / "materials"
 DATA_DIR.mkdir(exist_ok=True)
 MATERIALS_DIR.mkdir(exist_ok=True)
-for cid in ["nlp", "cvpr", "it-forum"]:
+for cid in ["nlp", "cvpr"]:
     (MATERIALS_DIR / cid).mkdir(exist_ok=True)
 
-app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DATA_DIR / 'studydash.db'}"
+# --- Database: use Supabase Postgres if DATABASE_URL is set, else SQLite ---
+DATABASE_URL = os.getenv("DATABASE_URL")
+if DATABASE_URL:
+    app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
+else:
+    app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DATA_DIR / 'studydash.db'}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
 
+# --- Supabase Storage client (optional) ---
+supabase_client = None
+SUPABASE_BUCKET = os.getenv("SUPABASE_BUCKET", "public")
+if os.getenv("SUPABASE_URL") and os.getenv("SUPABASE_KEY"):
+    from supabase import create_client
+    supabase_client = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
+
 with app.app_context():
     db.create_all()
-    json_path = DATA_DIR / "progress.json"
-    if json_path.exists():
-        migrate_from_json(app, json_path)
+    if not DATABASE_URL:
+        json_path = DATA_DIR / "progress.json"
+        if json_path.exists():
+            migrate_from_json(app, json_path)
+        else:
+            seed_from_initial_data(app)
     else:
         seed_from_initial_data(app)
 
@@ -103,6 +118,13 @@ def toggle_milestone(course_id, milestone_id):
 # ─── Material Routes ───
 
 
+@app.route("/api/materials/all", methods=["GET"])
+def get_all_materials():
+    """Return all materials across courses for revision view."""
+    materials = Material.query.order_by(Material.course_id, Material.week).all()
+    return jsonify([m.to_dict() for m in materials])
+
+
 @app.route("/api/materials", methods=["POST"])
 def add_material():
     file = request.files.get("file")
@@ -120,9 +142,19 @@ def add_material():
 
     if file:
         safe_name = f"{mat_id}_{file.filename}"
-        save_path = MATERIALS_DIR / course_id / safe_name
-        file.save(str(save_path))
-        material.file_path = str(save_path)
+        if supabase_client:
+            storage_path = f"{course_id}/{safe_name}"
+            file_bytes = file.read()
+            supabase_client.storage.from_(SUPABASE_BUCKET).upload(
+                storage_path, file_bytes,
+                {"content-type": file.content_type or "application/octet-stream"},
+            )
+            public_url = f"{os.getenv('SUPABASE_URL')}/storage/v1/object/public/{SUPABASE_BUCKET}/{storage_path}"
+            material.file_path = public_url
+        else:
+            save_path = MATERIALS_DIR / course_id / safe_name
+            file.save(str(save_path))
+            material.file_path = str(save_path)
         material.file_name = file.filename
         if not title:
             material.title = file.filename
@@ -139,8 +171,15 @@ def delete_material(material_id):
     material = Material.query.get(material_id)
     if not material:
         return jsonify({"error": "Not found"}), 404
-    if material.file_path and os.path.exists(material.file_path):
-        os.remove(material.file_path)
+    if material.file_path:
+        if supabase_client and material.file_path.startswith("http"):
+            storage_path = material.file_path.split(f"/storage/v1/object/public/{SUPABASE_BUCKET}/")[-1]
+            try:
+                supabase_client.storage.from_(SUPABASE_BUCKET).remove([storage_path])
+            except Exception:
+                pass
+        elif os.path.exists(material.file_path):
+            os.remove(material.file_path)
     db.session.delete(material)
     db.session.commit()
     return jsonify({"ok": True})
@@ -159,6 +198,7 @@ def toggle_material_complete(material_id):
 
 @app.route("/api/materials/file/<path:filepath>", methods=["GET"])
 def serve_material(filepath):
+    """Serve local files. With Supabase, files are accessed via public URL directly."""
     full_path = MATERIALS_DIR / filepath
     if not full_path.exists():
         return jsonify({"error": "File not found"}), 404
@@ -168,6 +208,8 @@ def serve_material(filepath):
 @app.route("/api/materials/scan", methods=["POST"])
 def scan_materials():
     """Scan materials folders for untracked files and auto-import them."""
+    if supabase_client:
+        return jsonify({"new_materials": 0, "note": "Scan not available with Supabase storage"})
     existing_paths = {m.file_path for m in Material.query.all() if m.file_path}
     existing_names = {m.file_name for m in Material.query.all() if m.file_name}
 
@@ -514,7 +556,17 @@ def ai_explain():
 @app.route("/api/ai/study-plan", methods=["POST"])
 def ai_study_plan():
     today_str = date.today().isoformat()
-    courses = Course.query.all()
+    body = request.json or {}
+    course_ids = body.get("course_ids")
+    deadline_ids = body.get("deadline_ids")
+    material_ids = body.get("material_ids")
+    task_ids = body.get("task_ids")
+
+    if course_ids is not None:
+        courses = Course.query.filter(Course.id.in_(course_ids)).all()
+    else:
+        courses = Course.query.all()
+
     progress_summary = []
     for course in courses:
         mats = Material.query.filter_by(course_id=course.id).all()
@@ -527,9 +579,44 @@ def ai_study_plan():
             f"Upcoming deadlines: {', '.join(d.title + ' (' + d.date + ')' for d in upcoming)}"
         )
 
+    extra_context = []
+
+    if deadline_ids is not None:
+        deadlines = Deadline.query.filter(Deadline.id.in_(deadline_ids)).order_by(Deadline.date).all()
+    else:
+        deadlines = Deadline.query.filter(Deadline.done == False, Deadline.date >= today_str).order_by(Deadline.date).all()
+    if deadlines:
+        dl_lines = [f"  - {d.title} (due {d.date}, weight: {d.weight})" for d in deadlines]
+        extra_context.append("Selected deadlines:\n" + "\n".join(dl_lines))
+
+    if material_ids is not None:
+        materials = Material.query.filter(Material.id.in_(material_ids)).all()
+    else:
+        materials = Material.query.filter(Material.completed == False).all()
+    if materials:
+        mat_lines = []
+        for m in materials:
+            c = Course.query.get(m.course_id)
+            cname = c.name if c else m.course_id
+            week_str = f" Week {m.week}" if m.week else ""
+            mat_lines.append(f"  - {m.title or 'Untitled'} ({cname}{week_str}, {m.type})")
+        extra_context.append("Selected pending materials:\n" + "\n".join(mat_lines))
+
+    if task_ids is not None:
+        tasks = StudyTask.query.filter(StudyTask.id.in_(task_ids)).all()
+    else:
+        tasks = StudyTask.query.filter(StudyTask.done == False).order_by(StudyTask.date).all()
+    if tasks:
+        task_lines = [f"  - {t.title} (date: {t.date}, {t.hours}h, {t.category})" for t in tasks]
+        extra_context.append("Selected pending tasks:\n" + "\n".join(task_lines))
+
+    user_content = f"Today is {today_str}. Here's my progress:\n" + "\n".join(progress_summary)
+    if extra_context:
+        user_content += "\n\n" + "\n\n".join(extra_context)
+
     messages = [
-        {"role": "system", "content": "You are a study planner. Based on the student's current progress and upcoming deadlines, create a focused, actionable study plan for the next 7 days. Be specific about what to study each day and for how long."},
-        {"role": "user", "content": f"Today is {today_str}. Here's my progress:\n" + "\n".join(progress_summary)},
+        {"role": "system", "content": "You are a study planner. Based on the student's current progress, upcoming deadlines, pending materials, and existing tasks, create a focused, actionable study plan for the next 7 days. Be specific about what to study each day and for how long."},
+        {"role": "user", "content": user_content},
     ]
     plan = call_ai(messages, max_tokens=1500)
     return jsonify({"plan": plan, "generated_at": today_str})

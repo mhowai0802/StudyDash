@@ -19,6 +19,9 @@ export const getCourse = (id: string) =>
 export const getDeadlines = () =>
   api.get<Deadline[]>("/deadlines").then((r) => r.data);
 
+export const getAllMaterials = () =>
+  api.get<Material[]>("/materials/all").then((r) => r.data);
+
 export const toggleDeadline = (id: string) =>
   api.patch<Deadline>(`/deadlines/${id}/toggle`).then((r) => r.data);
 
@@ -49,8 +52,12 @@ export const aiExplain = (topic: string, courseId: string) =>
     .post("/ai/explain", { topic, course_id: courseId })
     .then((r) => r.data);
 
-export const aiStudyPlan = () =>
-  api.post("/ai/study-plan").then((r) => r.data);
+export const aiStudyPlan = (selections?: {
+  course_ids: string[];
+  deadline_ids: string[];
+  material_ids: string[];
+  task_ids: string[];
+}) => api.post("/ai/study-plan", selections ?? {}).then((r) => r.data);
 
 export const assignMaterialWeek = (id: string, week: number) =>
   api.patch(`/materials/${id}/week`, { week }).then((r) => r.data);

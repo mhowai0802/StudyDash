@@ -372,7 +372,7 @@ export default function CoursePage() {
                   <div className="material-actions">
                     {m.file_path && (
                       <button
-                        onClick={() => window.open(`http://localhost:5001/api/materials/file/${courseId}/${m.file_path!.split("/").pop()}`, "_blank")}
+                        onClick={() => window.open(m.file_path!.startsWith("http") ? m.file_path! : `http://localhost:5001/api/materials/file/${courseId}/${m.file_path!.split("/").pop()}`, "_blank")}
                         title="Open file"
                       >
                         <ExternalLink size={14} />
@@ -557,7 +557,7 @@ export default function CoursePage() {
                             <div className="material-actions">
                               {m.file_path && (
                                 <button
-                                  onClick={() => window.open(`http://localhost:5001/api/materials/file/${courseId}/${m.file_path!.split("/").pop()}`, "_blank")}
+                                  onClick={() => window.open(m.file_path!.startsWith("http") ? m.file_path! : `http://localhost:5001/api/materials/file/${courseId}/${m.file_path!.split("/").pop()}`, "_blank")}
                                   title="Open file"
                                 >
                                   <ExternalLink size={14} />

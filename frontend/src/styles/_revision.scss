@@ -1,0 +1,115 @@
+.revision-materials-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.revision-material-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.revision-course-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.revision-material-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.revision-material-title {
+  font-size: 14px;
+  font-weight: 500;
+  display: block;
+
+  &.done {
+    text-decoration: line-through;
+    color: var(--text-muted);
+  }
+}
+
+.revision-material-meta {
+  font-size: 12px;
+  color: var(--text-secondary);
+  display: flex;
+  gap: 8px;
+  margin-top: 2px;
+  flex-wrap: wrap;
+}
+
+.revision-course-link {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-weight: 500;
+
+  &:hover {
+    color: var(--accent-indigo);
+  }
+}
+
+.revision-material-type {
+  text-transform: capitalize;
+}
+
+.revision-type-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.revision-status-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.revision-badge-overdue {
+  background: rgba(244, 63, 94, 0.15);
+  color: var(--accent-rose);
+}
+
+.revision-badge-task {
+  background: rgba(99, 102, 241, 0.12);
+  color: var(--accent-indigo);
+}
+
+.revision-badge-material {
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--accent-emerald);
+}
+
+.revision-open-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+
+  &:hover {
+    color: var(--accent-indigo);
+    background: var(--bg-tertiary);
+  }
+}

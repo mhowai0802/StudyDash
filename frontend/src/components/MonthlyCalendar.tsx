@@ -38,7 +38,6 @@ const EVENT_STYLES: Record<string, { bg: string; border: string }> = {
 const COURSE_COLORS: Record<string, string> = {
   nlp: "#6366f1",
   cvpr: "#f59e0b",
-  "it-forum": "#10b981",
 };
 
 function getMonthDays(year: number, month: number) {
@@ -385,7 +384,6 @@ export default function MonthlyCalendar({
                   <option value="">No course</option>
                   <option value="nlp">NLP</option>
                   <option value="cvpr">CVPR</option>
-                  <option value="it-forum">IT Forum</option>
                 </select>
               </div>
               <div className="form-row">
@@ -473,7 +471,7 @@ export default function MonthlyCalendar({
                                   className="calendar-task-material-link"
                                   href={
                                     m.file_path
-                                      ? `http://localhost:5001/api/materials/file/${m.course_id}/${m.file_path.split("/").pop()}`
+                                      ? (m.file_path.startsWith("http") ? m.file_path : `http://localhost:5001/api/materials/file/${m.course_id}/${m.file_path.split("/").pop()}`)
                                       : m.url || "#"
                                   }
                                   target="_blank"

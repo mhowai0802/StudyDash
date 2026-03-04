@@ -49,8 +49,6 @@ COURSE_FOLDER_MAP = {
     "cvpr": "cvpr",
     "computer vision": "cvpr",
     "pattern recognition": "cvpr",
-    "it forum": "it-forum",
-    "comp7530": "it-forum",
 }
 
 DOWNLOADABLE_EXTENSIONS = {

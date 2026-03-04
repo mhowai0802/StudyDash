@@ -51,6 +51,7 @@ export interface Material {
   file_path?: string | null;
   file_name?: string | null;
   url?: string;
+  completed?: boolean;
 }
 
 export interface Deadline {

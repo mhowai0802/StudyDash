@@ -13,7 +13,6 @@ const COURSE_OPTIONS = [
   { id: "", label: "General" },
   { id: "nlp", label: "NLP & LLM" },
   { id: "cvpr", label: "CVPR" },
-  { id: "it-forum", label: "IT Forum" },
 ];
 
 const QUICK_PROMPTS = [

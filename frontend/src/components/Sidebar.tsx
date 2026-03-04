@@ -2,17 +2,16 @@ import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
   CalendarClock,
+  BookMarked,
   Bot,
   Sparkles,
   Brain,
   Eye,
-  Mic,
   Settings,
 } from "lucide-react";
 const courseLinks = [
   { to: "/course/nlp", label: "NLP & LLM", color: "#6366f1", icon: Brain },
   { to: "/course/cvpr", label: "CVPR", color: "#f59e0b", icon: Eye },
-  { to: "/course/it-forum", label: "IT Forum", color: "#10b981", icon: Mic },
 ];
 
 export default function Sidebar() {
@@ -40,6 +39,15 @@ export default function Sidebar() {
       >
         <CalendarClock size={18} />
         <span>Deadlines</span>
+      </NavLink>
+      <NavLink
+        to="/revision-materials"
+        className={({ isActive }) =>
+          `sidebar-link ${isActive ? "active" : ""}`
+        }
+      >
+        <BookMarked size={18} />
+        <span>Revision</span>
       </NavLink>
       <NavLink
         to="/ai"
