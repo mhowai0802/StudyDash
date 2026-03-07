@@ -1,0 +1,270 @@
+1Chapter 2 Part 1ImageEnhancement
+
+•Image Enhancement –A set of image processing operations applied on images to produce good images useful for a specific application.•The reasons for doing this include:■Making images more visually appealing■Highlighting interesting detail in images■Removing noise from imagesImportant to note - ‘good’ depends on your application. An enhancement that‘s good for one task might be bad for another.Criteria for enhancement are often subjective or too complex to be easily converted to useful objective measures.The algorithms tend to be qualitative and ad.
+
+
+Gamma CorrectionTo boost dark values
+
+
+Combining Spatial Enchantment TechniquesHighlighting the skeleton
+
+
+Median FilterRemove Salt and Pepper Noise
+
+
+•SpatialDomainImageEnhancementTechniques■PointOperations(Gray values change without any knowledge of its surroundings):•Log, power-law, piecewise linear•Histogram Equalization■RegionalOperations(Gray values change depending on the gray values in a small neighborhood of pixels around the given pixel):•Smoothing Filters•Adaptive Filter•Median Filter•Sharpening
+
+In general, spatial domain image processing can be defined asg(x, y)= T[f(x, y)]
+xy
+Imagef(x,y)(x,y)Origin•f(x,y) is input image•g(x,y) is output image•T[ ] is an operatorPoint-basedenhancement:The intensity of output g(x,y) only depends on the intensity of the input f(x,y) at the same coordinate of (x,y).
+
+•For example, a 3X3 neighborhood about a point (x,y) in an image in the spatial domain is shown on the right figure.•The neighborhood is moved from pixel to pixel in the image to generate an output imageOrigin
+xy
+Imagef(x,y)(x,y)3x3neighborhoodof(x,y)
+
+
+Three most common types of grey level transformations:•Linear:■Negative/Identity•Logarithmic:■Log/Inverse log•Power law:■nthpower/nthroot
+
+
+Identity Transformation:•s = r•g(x,y) = f(x,y)
+
+
+Negatives Transformation:•s = L-1 –r•s = 255 –r•g(x,y) = 255 –f(x,y)Reversing the intensity levels of an imagers
+
+
+•Negative images are useful for enhancing white or grey detail embedded in dark regions of an image■Note how much clearer the tissue is in the negative image of the mammogram below
+s = 255 –rorg(x,y) = 255 -f(x,y)Original ImageNegative ImageSmall lesion
+
+
+•Log transformation: s = c · Log(r + 1) g(x,y) = c · Log(f(x,y) + 1)•Map a narrow range of low input grey level values into a wider range of output values Expand the values of dark pixels Compress higher value lighter pixels•The inverse log transformation performs the opposite transformation s = c · (er - 1)
+
+
+•Log functions are particularly useful when the input grey level values may have an extremely large range of values•In the following example the Fourier transform of an image is put through a log transform to reveal more detail
+s = log(1 + r)Magnitude of Fourier SpectrumLog-transform of Fourier Spectrum Magnitude
+
+
+Power-Law Transformations: s = c · r𝛄 g(x,y) = c · f(x,y) 𝛄where c and 𝛄are positive constants•Map a narrow range of dark input values into a wider range of output values or vice versa•Varying 𝛄gives a whole family of curves
+
+
+•The images to the right show a magnetic resonance (MR) image of a fractured human spine•Problem: picture is too dark•Solution:expansionoflowergraylevelisdesirable,𝛄<1•Different curves highlight different detail
+s = r 0.6s = r 0.4s = r0.3
+10.90.80.70.60.50.40.30.20.10010.20.40.60.8Old IntensitiesTransformed Intensities
+10.90.80.70.60.50.40.30.20.1000.20.810.40.6Original IntensitiesTransformed Intensities10.90.80.70.60.50.40.30.20.1000.20.810.40.6Original IntensitiesTransformed Intensities
+
+http://www.nasa.gov/multimedia/imagegallery.image_feature_679.html𝛄=0.5,g(x,y)=f(x,y)0.5
+
+
+•An aerial photo of a runway is shown on right•Problem: image has “washout” appearance•Solution:compressionofhighergraylevelisdesirable,𝛄>1•This time power law transforms are used to darken the image•Different curves highlight different detail
+s=r3.0s =r 4.0s=r5.0
+
+
+𝛄= 2,g(x,y) = f(x,y)2
+
+
+Rather than using a well defined mathematical function we can use arbitrary user-defined transforms•Contrast Stretching■Expands the range of intensity levels in an image so that it spans the full intensity range of the recording medium or display device.•Intensity-level Slicing■Highlighting a specific range of intensities in an image often is of interest.
+
+
+§Intensity transformation function: s=T(r)§Produce higher contrast than the original by§Darkening the levels below k in the original image§Brightening the levels above k in the original§Thresholding: produce a binary image
+
+
+§Problem:§Low contrast image§result of poor illumination§lack of dynamic range§Solution: Contrast stretching using the given transformation function
+Low contrast image
+Contrast Stretched image with piecewise linear transform
+
+
+§Highlights a specific range of grey levels§Display high value for gray levels in the range of interest and low value for all other gray levels§Useful for highlighting features in an image
+
+
+§Binary gray level slicing transform§Highlights range [A,B] and reduces all others to a constant level§Linear gray level slicing transform§Highlights range [A,B] but preserves all other levels
+25
+
+
+Highlightthemajorbloodvesselsandstudytheshapeof theflowofthecontrastmedium(todetectblockages,etc.)
+Measuring theactualflowofthecontrastmediumasa functionoftimeinaseriesofimages
+
+
+•What is Histogram?•Histogram Equalization•Histogram Matching•Adaptive Histogram Processing
+
+
+§Given an image with gray levels from 0 to L-1, the histogram of the image is a representation of the frequency of occurrence of each gray level in the image§Histogram h(rk) = nk§rk is the kth intensity value§nk is the number of pixels in the image with intensity rk§Probability Density Function (pdf): Normalized histogram p(r)=nk/(MN)§Cumulative Density Function (cdf)
+rk
+nkImagesize:MxN
+
+§Find histogram§Find Probability Density Function (pdf)§Find Cumulative Density Function (cdf)
+64003200400102030Histogramh(k)
+k
+0.320.04102030p(k)pdf0.64k
+0.640.96102030cdf1.0P(k)
+k
+P(r1)=p(r1)=0.64 P(r2)=p(r1)+p(r2)=0.64+0.32=0.96 P(r3)=p(r1)+p(r2)+p(r3)=1
+
+
+§Dark Image§Components of histogram are concentrated on low side of gray scale§Bright image§Componentsofhistogramareconcentratedonthehighsideofthegrayscale
+
+
+§Low-contrast Image§Histogram is narrow and centred towards the middle of the gray scale§High-contrast Image§Histogram covers a broad range of the gray scale§The distribution of pixels is not too far from uniform, with very few vertical lines being much higher than others
+31
+
+§Images and their histograms§Notice the relationships between the images and their histograms§Note that the high contrast image has the most evenly spaced histogram
+
+
+•Aim: To “equalize” the histogram, to “flatten”, “distribute as uniform as possible”•As the low-contrast image's histogram is narrow and centered towards the middle of the gray scale, by distributing the histogram to a wider range will improve the quality of the image•Adjust probability density function of the original histogram so that the probabilities spread equally
+
+
+§Objective: Obtain a flat histogram§Let pr(r) and ps(s) denote the probability density function (PDF) of random variables r and s
+
+§Procedure
+
+
+§Suppose that a 3-bit image (L=8) of size 64 ×64 pixels (MN = 4096) has the intensity distribution shown in following table.§Get the histogram equalization transformation function and give the ps(sk) for each sk.
+
+
+s2=4.55→5s3 = 5.67 → 6s4=6.23→6s5 = 6.65 → 7s6=6.86→7s7 = 7.00 → 7
+
+
+§Histogram equalization can be performed on a “local” level.§Compute the histogram and CDF of a local region about each pixel and then use that CDF as a lookup table for that pixel alone.§Has the (possibly negative) effect of eliminating global contrast
+
+
+•Histogram equalization based on a histogram obtained from a portion of the image
+
+
+•Consider equalizing a color image(a) equalizing each channelindependently(Each channel gets stretched differently, so the ratio between R, G, and B changes. That means the colors shift.)(b) convert to a color space like HSV or YCbCr, and equalize only the intensity channel
+
+
+SourceHueSaturationBrightness
+46HSV channels - hue shows the color type, saturation shows the intensity of color, value shows brightness. Very different from RGB.
+
+SourceYCbCr
+47YCbCr - Y is the luminance, the brightness. Cb and Cr are the color components. Notice the Y channel looks like a grayscale image - that's the brightness information separated out.
+
+•Histogram matching modifies the histogram of one image so that if would resemble the histogram of a second image.•Why is histogram matching necessary?For example, several satellite images were combined together into a mosaic. Since this mosaic was create from various images that were collected at different times of the year. Each image has its own histogram.
+
+
+Step-by-Step ProcessSuppose we have a source image and want its histogram to match a target image's histogram.Step 1: Compute the CDF of the Source ImageCount the number of pixels at each gray level in the source image, calculate the probability, and then compute the cumulative distribution function (CDF).Step 2: Compute the CDF of the Target ImageApply the same procedure to the target histogram.Step 3: Establish the Gray-Level MappingFor each gray level s in the source image, find the gray level t in the target image whose CDF value is closest to CDF_s(s). This creates the mapping s → t.Step 4: Apply the MappingReplace every pixel in the source image using the mapping table.
+
+Gray Level rPixel CountProbability P(r)Cumulative CDF_s080.1250.1251100.1560.2812140.2190.5003120.1880.688480.1250.813560.0940.906640.0630.969720.0311.000Gray Level zProbability P(z)Cumulative CDF_t00.0000.00010.0000.00020.0000.00030.1500.15040.3500.50050.3000.80060.1500.95070.0501.000Source Image DistributionThis source image is skewed toward darker tones (more pixels at low gray levels).Target Histogram (Desired Distribution)This target distribution is concentrated in the mid-to-bright range (gray levels 3–6).
+
+Building the Mapping (The Key Step!)For each source gray level, find the target gray level with the closest CDF value:Source rCDF_s(r)Closest CDF_tMaps to Target z00.1250.150310.2810.150 320.5000.500430.6880.800540.8130.800550.9060.950660.9690.950671.0001.0007Gray Level Cumulative CDF_sCumulative CDF_t00.1250.00010.2810.00020.5000.00030.6880.15040.8130.50050.9060.80060.9690.95071.0001.000
+
+Main idea•Define a neighborhood of a pixel•Define an operation on pixels in the neighborhood•Output pixel value = result of the operationTopics•Basics of Spatial Filtering•Smoothing Spatial Filters•Averaging filters, Order-Statistics filters•Sharpening Spatial Filters•Laplacian filters, Sobelfilters,…•Combining Spatial Enhancement Methods
+
+Main idea•Define a neighborhood of a pixel•Define an operation on pixels in the neighborhood•Output pixel value = result of the operationTopics•Basics of Spatial Filtering•Smoothing Spatial Filters•Averaging filters, Order-Statistics filters•Sharpening Spatial Filters•Laplacian filters, Sobelfilters,…•Combining Spatial Enhancement Methods
+
+§g(x,y) = T[f(x,y)]§f(x,y): input image§g(x,y): output image§T: an operator on f defined over some neighborhood of (x,y)§A spatial filter consists of§a neighborhood, and§a predefined operation4Originx
+yImage f (x, y)(x, y)Neighbourhood
+
+
+rstuvwxyz
+yImage f (x, y)
+eprocessed = v ∙ e +r ∙ a + s ∙ b + t ∙ c +u ∙ d + w ∙ f +x ∙ g + y ∙ h + z ∙ iFilter (Kernel)Simple 3*3Neighbourhoode3*3 Filter
+abcdefghiOriginal Image PixelsOriginx*
+§Repeated for every pixel in the original image to generate the filtered image
+
+§Filtering can be given in equation form by
+57
+
+
+Main idea•Define a neighborhood of a pixel•Define an operation on pixels in the neighborhood•Output pixel value = result of the operationTopics•Basics of Spatial Filtering•Smoothing Spatial Filters•Averaging filters, Order-Statistics filters•Sharpening Spatial Filters•Laplacian filters, High-boost filters•Combining Spatial Enhancement Methods
+
+ØSimplest smoothing operation is that of neighborhood averagingØReplace each pixel by the average of pixels in a square window surrounding this pixel•Useful for noise removal•Resultant image may be blurred
+591/91/91/91/91/91/91/91/91/9Simple Averaging Filter1/91/91/91/91/91/91/91/91/9Originx
+yImagef (x,y)
+e=1/9∙106+1/9∙104+1/9∙100+1/9∙108+1/9∙99+1/9∙98+1/9∙95+1/9∙90+1/9∙85FilterSimple3*3Neighbourhood1010499951001089890851/91/91/91/91/91/91/1619/9/93*3SmoothingFilter
+1041001089910698959085OriginalImage Pixels*
+
+§Original image size 500x500 pixels§Results of smoothing with averaging filter masks of size n=3, 5, 9, 15, 35, respectively
+
+
+§An attempt to reduce blurring in the smoothing process§Instead of averaging all the pixel values in the window, this filter gives the closer-by pixels higher weighting, and far-away pixels lower weighting.§Reduce value of coefficients with the distance from the center pixel increasing1/162/161/162/164/162/161/162/161/16
+
+
+62§Non-linear filters§Response is based on ordering (ranking) the pixels contained in the image area encompassed by the filter§Example:§median filter, max filter, min filter
+
+
+§Obtained by sorting all pixels in the analysis window in increasing or decreasing order of amplitudes and picking the middle value if the number of pixels is odd, or the average of the two values in middle if the number of pixels is even.§Popularly used for certain types of random noise (impulse noise, salt and pepper noise)§Excellent noise-reduction capabilities§Less blurring effect that linear smoothing filters of similar size
+63
+
+
+§Filtering is often used to remove noise from images
+
+
+§Filtering is often used to remove noise from images§Sometimes a median filter works better than an averaging filter
+65
+
+
+§Obtained by sorting all pixels in the analysis window in increasing or decreasing order of amplitudes and picking the max/minvalue.Median Filter:§Removes salt and pepper noise§Most commonly used for denoisingMax Filter:§Expands bright regions§Used in morphological dilationMin Filter:§Expands dark regions§Used in morphological erosion66
+
+
+Main idea•Define a neighborhood of a pixel•Define an operation on pixels in the neighborhood•Output pixel value = result of the operationTopics•Basics of Spatial Filtering•Smoothing Spatial Filters•Averaging filters, Order-Statistics filters•Sharpening Spatial Filters•Laplacian filters, Sobelfilters,…•Combining Spatial Enhancement Methods
+
+§Smoothing filters remove fine detail§Sharpening spatial filters seek to highlight fine detail§Remove blurring from images§Highlight edges§Sharpening filters are based on spatial differentiation
+
+
+§Differentiation measures the rate of change of a function§Let’s consider a simple 1 dimensional example
+
+
+§The formula for the 1st derivative of a function is as follows:§It’s just the difference between subsequent values and measures the rate of change of the function∂x∂f= f (x +1) − f (x)
+0
+
+§The derivatives of a function is as follows:§Simply takes into account the values both before and after the current value=f(x+1)+f(x−1)−2f(x)∂2x∂2f
+0
+
+§The 2nd derivative is more useful for image enhancement than the 1st derivative§Stronger response to fine detail§Simpler implementation§The first sharpening filter we will look at is the Laplacian§One of the simplest sharpening filters
+
+
+§The Laplacian is defined as follows:§where the partial 2nd order derivative in the x direction is defined as follows:§and in the y direction as follows:f (x +1, y) + f (x −1, y) − 2 f (x, y)∂2 f∂2x== f (x, y +1) + f (x, y −1) − 2 f (x, y)∂2 f∂2 y
+
+
+§So, the Laplacian can be given as follows:§∇2 f= [ f (x +1, y) + f (x −1, y)+f (x, y +1) + f (x, y −1)− 4 f (x, y)§We can easily build a filter based on this
+
+
+§This Laplacian mask is implemented differently by incorporating the diagonal directions. The center value is now -8.
+
+
+§Applying the Laplacian filter to an image we get a new image that highlights edges and other discontinuities
+
+
+g(x, y) = f (x, y) −∇2 f§The result of a Laplacian filtering is not an enhanced image§We have to do more work in order to get our final image§Subtract the Laplacian result from the original image to generate our final sharpened enhanced image
+
+
+§In the final sharpened image, edges and fine detail are much more obvious
+-=Original ImageLaplacian Filtered ImageSharpened Image
+
+
+79§The entire enhancement can be combined into a single filtering operationg(x, y) = f (x, y) −∇2 f= f (x, y) −[ f (x +1, y) + f (x −1, y)+ f (x, y +1)+ f (x, y −1) − 4 f (x, y)= 5 f (x, y) − f (x +1, y) − f (x −1, y)− f (x, y +1) − f (x, y−1)
+
+
+§This gives us a new filter which does the whole job for us in one step0-10-15-10-10
+
+
+§There are lots of slightly different versions of the Laplacian that can beused:0101-410101111-81111-1-1-1-19-1-1-1-1Simple LaplacianVariant of Laplacian
+
+
+§First-orderderivatives are implemented using the magnitude of the gradient
+
+
+§Roberts 2x2 cross-gradient operators [1965]
+
+
+§Sobel operators, 3x3
+
+
+§Sobel operators, 3x3
+
+
+Main idea•Define a neighborhood of a pixel•Define an operation on pixels in the neighborhood•Output pixel value = result of the operationTopics•Basics of Spatial Filtering•Smoothing Spatial Filters•Averaging filters, Order-Statistics filters•Sharpening Spatial Filters•Laplacian filters, Sobelfilters,…•Combining Spatial Enhancement Methods
+
+§Successful image enhancement is typically not achieved using a single operation§Rather we combine a range of techniques in order to achieve a final result§This example will focus on enhancing the bone scan to the right
+
+
+§Target: To sharpen the original image and bring out more skeletal detail§Problems:§Narrow dynamic range of gray level§High noise content makes image difficult to enhance
+
+
+§Solution:§Laplacian to highlight fine details§Gradient to enhance prominent edges§Gray level transformation to increase the dynamic range of gray levels
+
+
+93
+
+
+~ END ~
+95

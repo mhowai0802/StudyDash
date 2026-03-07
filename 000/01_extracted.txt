@@ -1,0 +1,227 @@
+1Chapter 1 Introduction+ImageAcquisition
+
+¡CourseInstructor§Prof.XiaoqingGUO§Email:xiaoqingguo@hkbu.edu.hk¡TeachingAssistant§Mr. ZhenshunLIU§Email:cszsliu@comp.hkbu.edu.hk2
+
+ØLecture--Thursday  18:30 – 20:20 ØLab--Thursday: 20:30 – 21:20(TAwillassist)§Venue: FSC801C,FSC801D
+3
+
+WeekDateTimeLecture/LabVenueRemarks115 Jan18:30 – 20:20Lecture(Introduction+ImageAcquisition)FSC801C,DConventionalCVPRalgorithms15 Jan20:30 – 21:20NolabFSC801C,D222 Jan18:30 – 20:20Lecture(Imageenhancement)FSC801C,D22 Jan20:30 – 21:20Lab 1FSC801C,D329 Jan18:30 – 20:20Lecture(Featureextractor)FSC801C,D29 Jan20:30 – 21:20Lab 2FSC801C,D45 Feb18:30 – 20:20Lecture(Imageclassificationandsegmentation)FSC801C,D5 Feb20:30 – 21:20Lab 3FSC801C,D
+4
+
+WeekDateTimeLecture/LabVenueRemarks512 Feb18:30 – 20:20Lecture(DeeplearningforCVPR)+CourseprojectbriefingFSC801C,DDeeplearningforCVPR12 Feb20:30 – 21:20Quiz(ConventionalCVPR)FSC801C,D619 Feb18:30 – 20:20UniversityHolidays:ChineseNewYear19 Feb20:30 – 21:20726 Feb18:30 – 20:20Lecture(Segmentation)FSC801C,D26 Feb20:30 – 21:20Lab4FSC801C,D85 Mar18:30 – 20:20Lecture(Objectdetection)FSC801C,D5 Mar20:30 – 21:20Lab5FSC801C,D912 Mar18:30 – 20:20Lecture(Temporalprocessing)FSC801C,D12 Mar20:30 – 21:20Lab 6FSC801C,D1019 Mar18:30 – 20:20Lecture(Datageneration)FSC801C,D19 Mar20:30 – 21:20Lab 7FSC801C,D1126 Mar18:30 – 20:20Lecture(CVPRreview)+Quiz(DL-basedCVPR)FSC801C,D26 Mar20:30 – 21:20Project consultation (optional)FSC801C,D5
+
+WeekDateTimeLecture/LabVenueRemarks122 April18:30 – 20:20UniversityHolidays:Easter2 April20:30 – 21:20139 April18:30 – 20:209 April20:30 – 21:201416 April18:30 – 20:20Group Project PresentationFSC801C,DBystudents16 April20:30 – 21:20Group Project PresentationFSC801C,D1523 April18:30 – 20:20Group Project PresentationFSC801C,D23 April20:30 – 21:20Group Project PresentationFSC801C,D
+6
+
+ØExplain basic theories and techniques in computer vision and pattern recognition ØIdentify various approaches of computer vision and pattern recognition, and design the components of computer vision and pattern recognition systems ØDescribe and discuss the basic functions and methods for image processing ØDesign and develop a computer vision and pattern recognition application prototype 7
+
+¡Continuous Assessment     50%§Assignment(2in-classquizzes)    5%§Lab exercises(7labs)      10%§Group project (proposal+presentation+report+code) 35%  Ø Final Exam       50%In order to pass the course, students have to obtain (i) at least 30% in the final examination and (ii) at least 35% in the total score.8
+
+¡Quiz--1hourperquiz§Closed-book exam§LLM prohibited§Mobile phones prohibited§Only one A4 sheet of notes allowed§Regular calculators permitted¡Finalexam--2hour§Nobook,noLLM,nophones,nonotes.Onlyregularcalculators permitted9
+
+¡SubmitthecodetoMoodlein48haftereachcourse.¡Late submission is notaccepted without previous arrangement with theinstructor.¡If approved, late submission receives 10% per day penalty.
+10
+
+¡2-3studentsformagroup¡Focused on one task (will specify theoptionslater)¡Related to our course (segmentation, detection, classification,…)¡10minspresentationper person + 5 minsQ&A per group(present your responsible part(s))¡One proposalandreport per-group (specify your role)¡CodeshouldbesubmittedaswellNote:Pay attention to workload and contribution balance. 11
+
+12Ø12 Feb 2026(Week5) üProject briefingØ 19 Feb 2026(Week6) üSubmit group member listØ20 Mar 2026 (Week10,20%)üSubmit a project proposal and plan, which includes but not limited to, your preliminary studies, rationale of your proposed methodology and your initial design via Moodle.A good proposal shows you understand what you're doing.Ø16/23 April 2026 (Week14-15,40%)üpresentation and demonstration, and Q&AØ30 April 2026 (40%)üSubmit final report, with your ppt and source codes via Moodle*Late submission Policy: 10% deduction per day
+
+
+Reference Books:ØR. O. Duda, P . E. Hart and D. G. Stork, Pattern Classification, 2nd Edition, John Wiley & Sons, Inc, 2000. ØL.G. Shapiro and G. C. Stockman, Computer Vision, Prentice Hall, 2001. ØRichard Szeliski, Computer Vision: Algorithms and Applications, Springer, 2010 ØKlette, Reinhard, Concise computer vision - An introduction into theory and algorithm, Springer, 2014. ØGoodfellow, Bengio, and Courville, Deep Learning, MIT Press, 2016. ØZhang, A., Lipton, Z. C., Li, M., and Smola, A. J.Dive into deep learning 2019Hands-on:ØJoseph Howse,Joe Minichino,Learning OpenCV 4 Computer Vision with Python 3: Get to grips with tools, techniques, and algorithms for computer vision and machine learning, 3rd Edition, 2020ØAlberto Fernandez Villan, Mastering OpenCV 4 with Python: A practical guide covering topics from image processing, augmented reality to deep learning with OpenCV 4 and Python 3.7, 2019Research:ØIEEE Transactions on Pattern Analysis and Machine Intelligence ØIEEE Transactions on Image Processing ØIEEE Transactions on Information Forensics and SecurityØInternational Journal on Computer Vision ØJournal of Pattern Recognition ØConferences:CVPR,ICCV,ECCV13
+
+141. Does this course require mathØYesØAble to read and understand the physical meaning of mathØTraditionalCVPRalgorithmsneedsomecalculations2. Does this course require programming? If so, what language(s) will be used?ØYes, PythonØIDE: VSCode(you can use other IDE, e.g.pytram,Jupyter,Spyder) ØAPI: OpenCV,sklearn  (conventional CVPR) and PyTorch (deep learning)ØWill schedule lab sessions for OpenCV and PyTorch
+
+153. Who should take this course?ØThose who are interested in computer vision and pattern recognition  as well as  its applicationsØThose who would like to work in AI and related areasØThose who would like to do research in computer vision, pattern recognition and machine learning4. Will this course teach computer vision and pattern recognition in-depth?Ø No. This course gives a broad overview of computer vision and pattern recognition as well as its applicationsØ Students who are interested in this area could contact me for more materials. 
+
+¡Introduction to computer vision and pattern recognition§Computervisionapplications§Imageacquisition§Colormodels/spaces
+16
+
+¡Introduction to computer vision and pattern recognition§Computervisionapplications§Imageacquisition§Colormodels/spaces
+17
+
+¡“Computer visionis aninterdisciplinary scientific fieldthat deals with howcomputerscan gain high-level understanding fromdigital imagesorvideos. From the perspective ofengineering, it seeks to understand and automate tasks that thehuman visual systemcan do.” [From Wikipedia]¡Teach machine/computer how to see and understand images
+18
+
+¡“The field of pattern recognition is concerned with the automatic discovery of regularities in data through the use of computer algorithms and with the use of these regularities to take actions such as classifying the data into different categories” [From Wikipedia]¡Teach machine/computer how to recognize a pattern
+19
+
+ØScene segmentationØRoad sign recognitionØCar recognition ØPedestrian recognition
+20
+https://www.greencarcongress.com/2014/11/20141114-toshibaimage.html
+https://blog.mapillary.com/update/2019/03/19/introducing-seamless-scene-segmentation.html
+https://www.youtube.com/watch?v=9e2x4dDRB-k
+
+¡Face¡Fingerprint¡Iris¡Gait§…
+21
+https://en.wikipedia.org/wiki/Iris_recognition
+https://mobidev.biz/blog/multimodal-biometrics-verification-system-ai-machine-learning
+https://www.youtube.com/watch?v=UI41RyHUako
+Border Control
+FaceID in iPhone XAnnounced on 12 September 2017
+
+
+22
+https://www.youtube.com/watch?v=m-_t_aIlQwg
+https://www.youtube.com/watch?v=pW6nZXeWlGM
+https://www.youtube.com/watch?v=UzhJiO9oDKg
+X-box Kinect
+
+23
+https://www.youtube.com/watch?v=j_wyFJoTR9A
+https://www.youtube.com/watch?v=GrAdG9r7shU
+https://www.youtube.com/watch?v=7IVUyhMkyms
+Thomas G et al. Computer vision for sports: Current applications and research topics, CVIU 2017
+
+¡Defect recognition
+24
+https://www.youtube.com/watch?v=KXMPk3FKHgA
+https://github.com/tangsanli5201/DeepPCB
+https://darkfield.com/industries/glass/#
+
+25
+Video: https://www.youtube.com/watch?v=9fAcjfnWyso?
+
+ØMultimodality Computer Vision ApplicationsüInteractive chat/conversation (LLM)üPrompt engineeringüGeneration ability: Gen Arts
+26
+Source: https://docs.thinkwisesoftware.com/docs/sf/llm
+
+¡Introduction to computer vision and pattern recognition§Computervisionapplications§Imageacquisition§Colormodels/spaces
+27
+
+•Knowledge of how images form in the eye can help us with processing digital images■Perceptual based Image Processing•Focus on perceptually significant information•Discard perceptually insignificant information•Issues:■Biological■Psychophysical
+28
+
+•Light passes through cornea, iris, lens and form image on retina.•Retinacontains2typesofphotoreceptors:rodsandcones•Fovea is about 1.5 mm in width, contains about 337,000 cones•Focal length about 17 mm
+VisualaxisBlindSpot
+29
+
+The retina is covered with light receptors called cones (6-7 million) and rods (75-150 million)•Cones are concentrated around the fovea, detect color at bright light –photopic vision•Rods spread at back of eye, general vision –scotopic vision.
+30
+
+•Muscles within the eye can be used to change the shape of the lens allowing us focus on objects that are near or far away•An image is focused onto the retina causing rods and cones to become excited which ultimately send signals to the brain
+31
+
+32
+Computer, LCD/LED TV, Printer, Film, etc….
+Object/SceneElement
+Camera, Scanner,X-ray Machine, etc
+
+
+33
+RGBValues
+LCD/LEDDisplay orPrinterOutput
+HDMI/USB
+ColorRGBValues
+
+34
+https://en.wikipedia.org/wiki/Electromagnetic_spectrum•Normally images are formed from Electromagnetic (EM) radiation
+
+35
+Three major sources•Reflected light■Photographic images, scanned images, …•Absorbed light■X-ray image, …•Emitted light■Infrared image, …
+Thermal/IR view of a ChipX-Ray of ChestPhoto of natural scene
+
+1.Inject patient with isotope2.Positron emission tomography3.Gas cloud in constellation Cygnus4.Radioactive valve
+Gamma ray exposed images (emitted light)YouTube Example:https://www.youtube.com/watch?v=ghzQj_E3A-g
+36
+
+A projection of absorbed X-Rays as they pass through a patient.
+AirportInspectionOtherexamples
+37
+
+•Another important use of X-Rays is Computer Tomography (CT) scanning. It can create 3D image of object from many projections.
+38
+
+•Fluorescence Microscopy
+Sample treated with fluorescent dye
+UVLight
+YouTube Example: https://www.youtube.com/watch?v=PCJ13LjncMc
+39
+
+•Smartphones•Consumer Digital Imaging•Light Microscope•Remote Sensing (Satellite)•Manufacturing/Inspection•Spacecraft Imaging•License Plate Recognition•Biometrics
+40
+
+•Night vision system used by soldiers•IR satellite view of Augustine volcano
+41
+
+RadarSpacebome radar image of mountains in southeast Tibet
+42
+
+•MRI (Magnetic Resonance Imaging)
+43
+
+44
+
+45
+
+§A digital sensor can only measure a limited number of samples at a discrete set of energy levels. It cannot capture everything continuously.§Sampling is about space. We divide the image into a grid of pixels. More samples means higher resolution.§Quantization is about intensity. Quantization is the process of converting a continuous analogue signal into a digital representation of this signal
+SamplingQuantization
+46
+
+§Remember that a digital image is always only an approximation of a real world scene
+47
+
+§Pixel = Picture Element§The smallest discrete component of an image or picture on a screen is known as a pixel.§The greater the number of pixels, the greater is the resolution.§Each pixel is a sample of an original image, where more samples typically provide more-accurate representations of the original.
+48pixel
+
+§Spatial Resolution:§Number of lines per millimeter, or Dot Per Inch (DPI).§Often say spatial resolution of MxN pixels.§The larger, the better.§Define how fine the sampling is.§Gray-level Resolution:§Smallest discernible change in gray level.§Often say gray-level resolution of L.§8 bits -> 28 –1 = 255
+49
+
+§The spatial resolution of an image is determined by how sampling was carried out§Image size M*N§Spatial resolution simply refers to the smallest discernable detail in an image§Vision specialists will often talk about pixel size§Graphic designers will talk about dots per inch (DPI)
+50
+
+51
+
+52
+
+§Intensity level resolution refers to the number of intensity levels used to represent the image§The more intensity levels used, the finer the level of detail discernable in an image§Intensity level resolution is usually given in terms of the number of bits used to store each intensity levelNumberofBitsNumberofIntensity LevelsExamples120,12400,01,10,114160000,0101,1111825600110011, 010101011665,5361010101010101010
+53
+
+64greylevels(6bpp)32greylevels(5bpp)
+16greylevels(4bpp)8greylevels(3bpp)2greylevels(1bpp)256greylevels(8bits perpixel)128greylevels(7bpp)
+4greylevels(2bpp)
+54
+
+§The big question with resolution is always how much is enough?§This all depends on what is in the image and what you would like to do with it§Key questions include§Does the image look aesthetically pleasing?§Can you see what you need to see within the image?
+55
+
+§The picture on the right is fine for counting the number of cars, but not for reading the number plate
+56
+
+LowDetail (Face)MediumDetail (Cameraman)HighDetail (Crowd)
+57
+
+58
+ØImage size vs resolution and bit(s)/pixel§Image size increases when either resolution or bits/pixel increases§Image size = resolution x bits/pixel
+1-bit Lena image size= 4000 x 3000 x 1 bit @ 12M bits = 1.5M Bytes8-bits Lena image size = 4000 x 3000 x 8 bits @ 96 M bits = 12M Bytes
+
+59
+ØWhat about color images?§Encode color information for each pixel§For display, usually we use Red, Green and Blue to represent each pixel§If we use 8 bits for each color channel, the image size  = 4000x3000 (image resolution)   x 8 (bits) x 3 (color channels) @ 288Mbits = 36M Bytes  => compression is required59
+59
+
+¡Introduction to computer vision and pattern recognition§Computervisionapplications§Imageacquisition§Colormodels/spaces
+60
+
+
+61
+ØColor Model:ØAn abstract mathematical system to represent color.ØA 3 dimensional abstractions.ØDefines three primary colors along three dimensionsØIs typically limited in the range of colors they can represent and hence often can’t represent all colors in the visible spectrum
+
+•Assumes that light is used to generate colors.•Human perception is additive since black is the absence of light and white the presence of all wavelengths of light.•Devices: computer monitor, LCD screens, projectors•RGB Color Model•Red : 700 nm•Green : 546 nm•Blue : 436 nm
+62
+
+§Different color models: RGB,CMY(CMYK), HSV, YCbCr§RGB color model: eye, monitor, video§CMY (CMYK) color model: printing§HSV/HSB: close to Human Visual Perception§YCbCr are commonly used for image/video compressions
+63
+
+SourceRedGreenBlue
+64How different parts of the image are brighter in different channels depending on the color.
+
+SourceCyanMagent aYellow
+65How different parts of the image are brighter in different channels depending on the color.Butforprintingcolors.
+
+SourceHueSaturationBrightness
+66HSV channels - hue shows the color type, saturation shows the intensity of color, value shows brightness. Very different from RGB.
+
+SourceYCbCr
+67YCbCr - Y is the luminance, the brightness. Cb and Cr are the color components. Notice the Y channel looks like a grayscale image - that's the brightness information separated out.
+
+~ End ~
+68
