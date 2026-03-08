@@ -1,7 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  BookOpen,
   Calendar,
   ArrowRight,
   CheckCircle,
@@ -9,15 +8,15 @@ import {
 } from "lucide-react";
 import {
   getCourses,
-  getCourse,
   getDeadlines,
+  toggleDeadline,
   getStudyTasks,
   toggleStudyTask,
   addStudyTask,
   deleteStudyTask,
   updateStudyTask,
 } from "../api/client";
-import type { Course, Deadline, StudyTask, TaskCategories, Material } from "../types";
+import type { Course, Deadline, StudyTask, TaskCategories } from "../types";
 import ProgressRing from "../components/ProgressRing";
 import MonthlyCalendar from "../components/MonthlyCalendar";
 
@@ -27,18 +26,10 @@ export default function Dashboard() {
   const [deadlines, setDeadlines] = useState<Deadline[]>([]);
   const [studyTasks, setStudyTasks] = useState<StudyTask[]>([]);
   const [taskCategories, setTaskCategories] = useState<TaskCategories>({});
-  const [allMaterials, setAllMaterials] = useState<Material[]>([]);
   const nav = useNavigate();
 
   const reload = useCallback(() => {
-    getCourses().then((data) => {
-      setCourses(data);
-      // Collect materials from all courses
-      Promise.all(data.map((c) => getCourse(c.id))).then((details) => {
-        const mats = details.flatMap((d) => d.materials || []);
-        setAllMaterials(mats);
-      });
-    });
+    getCourses().then(setCourses);
     getDeadlines().then(setDeadlines);
     getStudyTasks().then((data) => {
       setStudyTasks(data.tasks);
@@ -50,6 +41,11 @@ export default function Dashboard() {
 
   const handleToggleTask = async (id: string) => {
     await toggleStudyTask(id);
+    reload();
+  };
+
+  const handleToggleDeadline = async (id: string) => {
+    await toggleDeadline(id);
     reload();
   };
 
@@ -75,7 +71,6 @@ export default function Dashboard() {
 
   return (
     <div className="dash">
-      {/* Header with inline stats */}
       <div className="dash-header">
         <div className="dash-header-left">
           <h1 className="dash-title">Dashboard</h1>
@@ -97,22 +92,20 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Full-width Calendar */}
       <section className="dash-calendar">
         <MonthlyCalendar
           courses={courses}
           deadlines={deadlines}
           studyTasks={studyTasks}
           taskCategories={taskCategories}
-          materials={allMaterials}
           onToggleTask={handleToggleTask}
           onAddTask={handleAddTask}
           onDeleteTask={handleDeleteTask}
           onUpdateTask={handleUpdateTask}
+          onToggleDeadline={handleToggleDeadline}
         />
       </section>
 
-      {/* Courses strip */}
       <section className="dash-section">
         <div className="dash-section-header">
           <h2 className="dash-section-title">Courses</h2>
@@ -122,27 +115,22 @@ export default function Dashboard() {
         </div>
         <div className="dash-courses">
           {courses.map((c) => {
-            const progress =
-              c.total_materials && c.completed_materials != null
-                ? Math.round((c.completed_materials / c.total_materials) * 100)
-                : 0;
+            const total = c.total_tasks || 0;
+            const done = c.completed_tasks || 0;
+            const progress = total > 0 ? Math.round((done / total) * 100) : 0;
             return (
-              <div
-                key={c.id}
-                className="dash-course-card"
-                onClick={() => nav(`/course/${c.id}`)}
-              >
+              <div key={c.id} className="dash-course-card" onClick={() => nav(`/course/${c.id}`)}>
                 <div className="dash-course-accent" style={{ background: c.color }} />
                 <div className="dash-course-body">
                   <div className="dash-course-top">
                     <div>
-                      <div className="dash-course-code">{c.code}</div>
+                      <div className="dash-course-code">{c.name}</div>
                       <div className="dash-course-schedule">{c.schedule}</div>
                     </div>
                     <ProgressRing progress={progress} size={44} strokeWidth={4} color={c.color} />
                   </div>
                   <div className="dash-course-bottom">
-                    <span><strong>{c.completed_materials || 0}</strong>/{c.total_materials || 0} materials</span>
+                    <span><strong>{done}</strong>/{total} tasks done</span>
                     <span><strong>{c.total_weeks}</strong> weeks</span>
                   </div>
                 </div>
@@ -151,7 +139,6 @@ export default function Dashboard() {
           })}
         </div>
       </section>
-
     </div>
   );
 }

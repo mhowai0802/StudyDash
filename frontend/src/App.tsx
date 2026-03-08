@@ -4,9 +4,6 @@ import Dashboard from "./pages/Dashboard";
 import CoursePage from "./pages/CoursePage";
 import DeadlinesPage from "./pages/DeadlinesPage";
 import RevisionMaterialsPage from "./pages/RevisionMaterialsPage";
-import AIPage from "./pages/AIPage";
-import StudyPlanPage from "./pages/StudyPlanPage";
-import SettingsPage from "./pages/SettingsPage";
 
 export default function App() {
   return (
@@ -19,9 +16,6 @@ export default function App() {
             <Route path="/course/:courseId" element={<CoursePage />} />
             <Route path="/deadlines" element={<DeadlinesPage />} />
             <Route path="/revision-materials" element={<RevisionMaterialsPage />} />
-            <Route path="/ai" element={<AIPage />} />
-            <Route path="/study-plan" element={<StudyPlanPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
           </Routes>
         </main>
       </div>

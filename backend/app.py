@@ -1,18 +1,12 @@
 import os
 import uuid
-from datetime import datetime, date
-from pathlib import Path
+from datetime import date
 
-import requests as http_requests
-from flask import Flask, request, jsonify, send_from_directory, redirect
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
-from PyPDF2 import PdfReader
+from supabase import create_client
 
-from database import (
-    db, Course, Week, Deadline, StudyTask, Material,
-    ChatHistory, seed_from_initial_data, migrate_from_json,
-)
 from study_plan_data import TASK_CATEGORIES
 from project_data import COURSE_PROJECTS
 
@@ -21,41 +15,10 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
-DATA_DIR = Path(__file__).parent / "data"
-MATERIALS_DIR = Path(__file__).parent / "materials"
-DATA_DIR.mkdir(exist_ok=True)
-MATERIALS_DIR.mkdir(exist_ok=True)
-for cid in ["nlp", "cvpr"]:
-    (MATERIALS_DIR / cid).mkdir(exist_ok=True)
-
-# --- Database: use Supabase Postgres if DATABASE_URL is set, else SQLite ---
-DATABASE_URL = os.getenv("DATABASE_URL")
-if DATABASE_URL:
-    app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
-else:
-    app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DATA_DIR / 'studydash.db'}"
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-db.init_app(app)
-
-# --- Supabase Storage client (optional) ---
-supabase_client = None
-SUPABASE_BUCKET = os.getenv("SUPABASE_BUCKET", "public")
-if os.getenv("SUPABASE_URL") and os.getenv("SUPABASE_KEY"):
-    from supabase import create_client
-    supabase_client = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
-
-with app.app_context():
-    db.create_all()
-    if not DATABASE_URL:
-        json_path = DATA_DIR / "progress.json"
-        if json_path.exists():
-            migrate_from_json(app, json_path)
-        else:
-            seed_from_initial_data(app)
-    else:
-        seed_from_initial_data(app)
-
-
+supabase = create_client(
+    os.environ.get("SUPABASE_URL"),
+    os.environ.get("SUPABASE_KEY"),
+)
 
 
 # ─── Course Routes ───
@@ -63,33 +26,34 @@ with app.app_context():
 
 @app.route("/api/courses", methods=["GET"])
 def get_courses():
-    courses = Course.query.all()
+    courses = supabase.table("courses").select("*").execute().data
+    weeks = supabase.table("weeks").select("*").execute().data
+    tasks = supabase.table("study_tasks").select("id,course_id,done").execute().data
+
     result = []
     for c in courses:
-        d = c.to_dict()
-        total_weeks = len([w for w in c.weeks if w.status != "holiday"])
-        mats = Material.query.filter_by(course_id=c.id).all()
-        completed = [m for m in mats if m.completed]
-        d["total_materials"] = len(mats)
-        d["completed_materials"] = len(completed)
-        d["total_weeks"] = total_weeks
-        result.append(d)
+        c["assessment"] = __import__("json").loads(c["assessment_json"]) if c.get("assessment_json") else {}
+        c_weeks = [w for w in weeks if w["course_id"] == c["id"]]
+        c["weeks"] = sorted(c_weeks, key=lambda w: w["week_num"])
+        c["total_weeks"] = len([w for w in c_weeks if w.get("status") != "holiday"])
+        c_tasks = [t for t in tasks if t["course_id"] == c["id"]]
+        c["total_tasks"] = len(c_tasks)
+        c["completed_tasks"] = len([t for t in c_tasks if t["done"]])
+        result.append(c)
     return jsonify(result)
 
 
 @app.route("/api/course/<course_id>", methods=["GET"])
 def get_course(course_id):
-    course = Course.query.get(course_id)
-    if not course:
+    rows = supabase.table("courses").select("*").eq("id", course_id).execute().data
+    if not rows:
         return jsonify({"error": "Course not found"}), 404
-    d = course.to_dict()
-    mats = Material.query.filter_by(course_id=course_id).all()
-    completed = [m for m in mats if m.completed]
-    d["materials"] = [m.to_dict() for m in mats]
-    d["completed_material_ids"] = [m.id for m in completed]
-    d["total_materials"] = len(mats)
-    d["completed_count"] = len(completed)
-    return jsonify(d)
+    c = rows[0]
+    c["assessment"] = __import__("json").loads(c["assessment_json"]) if c.get("assessment_json") else {}
+    weeks = supabase.table("weeks").select("*").eq("course_id", course_id).order("week_num").execute().data
+    c["weeks"] = weeks
+    c["total_weeks"] = len([w for w in weeks if w.get("status") != "holiday"])
+    return jsonify(c)
 
 
 # ─── Project Routes ───
@@ -115,245 +79,40 @@ def toggle_milestone(course_id, milestone_id):
     return jsonify(milestone)
 
 
-# ─── Material Routes ───
-
-
-@app.route("/api/materials/all", methods=["GET"])
-def get_all_materials():
-    """Return all materials across courses for revision view."""
-    materials = Material.query.order_by(Material.course_id, Material.week).all()
-    return jsonify([m.to_dict() for m in materials])
-
-
-@app.route("/api/materials", methods=["POST"])
-def add_material():
-    file = request.files.get("file")
-    mat_id = str(uuid.uuid4())
-    course_id = request.form.get("course_id")
-    title = request.form.get("title", "")
-    mat_type = request.form.get("type", "other")
-
-    material = Material(
-        id=mat_id, course_id=course_id,
-        week=int(request.form.get("week", 0)),
-        title=title, type=mat_type,
-        created_at=datetime.now().isoformat(),
-    )
-
-    if file:
-        safe_name = f"{mat_id}_{file.filename}"
-        if supabase_client:
-            storage_path = f"{course_id}/{safe_name}"
-            file_bytes = file.read()
-            supabase_client.storage.from_(SUPABASE_BUCKET).upload(
-                storage_path, file_bytes,
-                {"content-type": file.content_type or "application/octet-stream"},
-            )
-            public_url = f"{os.getenv('SUPABASE_URL')}/storage/v1/object/public/{SUPABASE_BUCKET}/{storage_path}"
-            material.file_path = public_url
-        else:
-            save_path = MATERIALS_DIR / course_id / safe_name
-            file.save(str(save_path))
-            material.file_path = str(save_path)
-        material.file_name = file.filename
-        if not title:
-            material.title = file.filename
-    else:
-        material.url = request.form.get("url", "")
-
-    db.session.add(material)
-    db.session.commit()
-    return jsonify(material.to_dict()), 201
-
-
-@app.route("/api/materials/<material_id>", methods=["DELETE"])
-def delete_material(material_id):
-    material = Material.query.get(material_id)
-    if not material:
-        return jsonify({"error": "Not found"}), 404
-    if material.file_path:
-        if supabase_client and material.file_path.startswith("http"):
-            storage_path = material.file_path.split(f"/storage/v1/object/public/{SUPABASE_BUCKET}/")[-1]
-            try:
-                supabase_client.storage.from_(SUPABASE_BUCKET).remove([storage_path])
-            except Exception:
-                pass
-        elif os.path.exists(material.file_path):
-            os.remove(material.file_path)
-    db.session.delete(material)
-    db.session.commit()
-    return jsonify({"ok": True})
-
-
-@app.route("/api/materials/<material_id>/complete", methods=["PATCH"])
-def toggle_material_complete(material_id):
-    material = Material.query.get(material_id)
-    if not material:
-        return jsonify({"error": "Not found"}), 404
-
-    material.completed = not material.completed
-    db.session.commit()
-    return jsonify({"completed": material.completed})
-
-
-@app.route("/api/materials/file/<path:filepath>", methods=["GET"])
-def serve_material(filepath):
-    """Serve local files. With Supabase, files are accessed via public URL directly."""
-    full_path = MATERIALS_DIR / filepath
-    if not full_path.exists():
-        return jsonify({"error": "File not found"}), 404
-    return send_from_directory(full_path.parent, full_path.name)
-
-
-@app.route("/api/materials/scan", methods=["POST"])
-def scan_materials():
-    """Scan materials folders for untracked files and auto-import them."""
-    if supabase_client:
-        return jsonify({"new_materials": 0, "note": "Scan not available with Supabase storage"})
-    existing_paths = {m.file_path for m in Material.query.all() if m.file_path}
-    existing_names = {m.file_name for m in Material.query.all() if m.file_name}
-
-    new_count = 0
-    ext_to_type = {
-        ".pdf": "lecture_slides", ".pptx": "lecture_slides", ".ppt": "lecture_slides",
-        ".docx": "note", ".doc": "note", ".txt": "note",
-        ".py": "lab_exercise", ".ipynb": "lab_exercise", ".zip": "lab_exercise",
-        ".mp4": "video", ".mp3": "video",
-    }
-
-    for course_dir in MATERIALS_DIR.iterdir():
-        if not course_dir.is_dir() or course_dir.name.startswith("."):
-            continue
-        course_id = course_dir.name
-        if not Course.query.get(course_id):
-            continue
-
-        for file_path in sorted(course_dir.rglob("*")):
-            if not file_path.is_file() or file_path.name.startswith("."):
-                continue
-            str_path = str(file_path)
-            if str_path in existing_paths or file_path.name in existing_names:
-                continue
-
-            ext = file_path.suffix.lower()
-            mat_type = ext_to_type.get(ext, "other")
-
-            material = Material(
-                id=str(uuid.uuid4()), course_id=course_id, week=0,
-                title=file_path.stem, type=mat_type,
-                file_path=str_path, file_name=file_path.name,
-                created_at=datetime.now().isoformat(),
-            )
-            db.session.add(material)
-            new_count += 1
-
-    db.session.commit()
-    return jsonify({"new_materials": new_count})
-
-
-@app.route("/api/materials/<material_id>/week", methods=["PATCH"])
-def assign_material_week(material_id):
-    """Assign a material to a specific week."""
-    material = Material.query.get(material_id)
-    if not material:
-        return jsonify({"error": "Not found"}), 404
-    body = request.json
-    material.week = body.get("week", 0)
-    db.session.commit()
-    return jsonify(material.to_dict())
-
-
-@app.route("/api/materials/auto-map", methods=["POST"])
-def auto_map_materials():
-    """Auto-assign materials to weeks based on filename patterns."""
-    import re as re_mod
-
-    NLP_MAP = [
-        (r"about.this.course|course.info", 1),
-        (r"lecture\s*1|introduction", 1),
-        (r"lecture\s*2|text.preprocess", 2),
-        (r"lecture\s*3|slm|statistical.lang", 3),
-        (r"lecture\s*4|syntactic", 4),
-        (r"lab\s*1|lab1", 5),
-        (r"lecture\s*5|embedding", 6),
-        (r"lecture\s*6|dl|deep.learn|neural.network", 7),
-        (r"lab\s*2|lab2", 9),
-        (r"lab\s*3|lab3|corpus", 11),
-        (r"group.project|project.desc", 13),
-    ]
-
-    CVPR_MAP = [
-        (r"chapter\s*1|ch1", 1),
-        (r"chapter\s*2.*part\s*1|ch2.*p1", 2),
-        (r"chapter\s*2.*part\s*2|ch2.*p2", 3),
-        (r"chapter\s*2.*part\s*3|ch2.*p3", 4),
-        (r"chapter\s*3|ch3|project.brief", 5),
-        (r"quiz\s*1|quiz1", 5),
-        (r"lab\s*1|lab1", 2),
-        (r"lab\s*2|lab2", 3),
-        (r"lab\s*3|lab3", 4),
-        (r"lab\s*4|lab4", 7),
-        (r"lab\s*5|lab5", 8),
-        (r"lab\s*6|lab6", 9),
-        (r"lab\s*7|lab7", 10),
-    ]
-
-    COURSE_MAPS = {"nlp": NLP_MAP, "cvpr": CVPR_MAP}
-    mapped = 0
-
-    for course_id, rules in COURSE_MAPS.items():
-        materials = Material.query.filter_by(course_id=course_id).all()
-        for mat in materials:
-            if mat.week and mat.week > 0:
-                continue
-            fname = (mat.file_name or mat.title or "").lower()
-            for pattern, week_num in rules:
-                if re_mod.search(pattern, fname):
-                    mat.week = week_num
-                    mapped += 1
-                    break
-
-    db.session.commit()
-    return jsonify({"mapped": mapped})
-
-
 # ─── Deadline Routes ───
 
 
 @app.route("/api/deadlines", methods=["GET"])
 def get_deadlines():
-    deadlines = Deadline.query.order_by(Deadline.date).all()
+    deadlines = supabase.table("deadlines").select("*").order("date").execute().data
     today_str = date.today().isoformat()
     result = []
     for d in deadlines:
-        dd = d.to_dict()
-        if d.date < today_str and not d.done:
-            dd["urgency"] = "overdue"
-        elif d.date == today_str:
-            dd["urgency"] = "today"
+        if d["date"] < today_str and not d["done"]:
+            d["urgency"] = "overdue"
+        elif d["date"] == today_str:
+            d["urgency"] = "today"
         else:
-            days_away = (date.fromisoformat(d.date) - date.today()).days
+            days_away = (date.fromisoformat(d["date"]) - date.today()).days
             if days_away <= 7:
-                dd["urgency"] = "this_week"
+                d["urgency"] = "this_week"
             elif days_away <= 14:
-                dd["urgency"] = "next_week"
+                d["urgency"] = "next_week"
             else:
-                dd["urgency"] = "future"
-        result.append(dd)
+                d["urgency"] = "future"
+        result.append(d)
     return jsonify(result)
 
 
 @app.route("/api/deadlines/<deadline_id>/toggle", methods=["PATCH"])
 def toggle_deadline(deadline_id):
-    d = Deadline.query.get(deadline_id)
-    if not d:
+    rows = supabase.table("deadlines").select("*").eq("id", deadline_id).execute().data
+    if not rows:
         return jsonify({"error": "Not found"}), 404
-    d.done = not d.done
-    db.session.commit()
-    return jsonify(d.to_dict())
-
-
-# ─── Stats ───
+    new_done = not rows[0]["done"]
+    supabase.table("deadlines").update({"done": new_done}).eq("id", deadline_id).execute()
+    updated = supabase.table("deadlines").select("*").eq("id", deadline_id).execute().data[0]
+    return jsonify(updated)
 
 
 # ─── Study Tasks ───
@@ -361,313 +120,56 @@ def toggle_deadline(deadline_id):
 
 @app.route("/api/study-tasks", methods=["GET"])
 def get_study_tasks():
-    tasks = StudyTask.query.order_by(StudyTask.date).all()
-    return jsonify({"tasks": [t.to_dict() for t in tasks], "categories": TASK_CATEGORIES})
+    tasks = supabase.table("study_tasks").select("*").order("date").execute().data
+    return jsonify({"tasks": tasks, "categories": TASK_CATEGORIES})
 
 
 @app.route("/api/study-tasks/<task_id>/toggle", methods=["PATCH"])
 def toggle_study_task(task_id):
-    task = StudyTask.query.get(task_id)
-    if not task:
+    rows = supabase.table("study_tasks").select("*").eq("id", task_id).execute().data
+    if not rows:
         return jsonify({"error": "Not found"}), 404
-    task.done = not task.done
-    db.session.commit()
-    return jsonify(task.to_dict())
+    new_done = not rows[0]["done"]
+    supabase.table("study_tasks").update({"done": new_done}).eq("id", task_id).execute()
+    updated = supabase.table("study_tasks").select("*").eq("id", task_id).execute().data[0]
+    return jsonify(updated)
 
 
 @app.route("/api/study-tasks", methods=["POST"])
 def add_study_task():
     body = request.json
-    task = StudyTask(
-        id=str(uuid.uuid4()), date=body.get("date"),
-        course_id=body.get("course_id", ""),
-        title=body.get("title", ""),
-        hours=body.get("hours", 1),
-        category=body.get("category", "review"),
-        done=False,
-    )
-    db.session.add(task)
-    db.session.commit()
-    return jsonify(task.to_dict()), 201
+    task = {
+        "id": str(uuid.uuid4()),
+        "date": body.get("date"),
+        "course_id": body.get("course_id", ""),
+        "title": body.get("title", ""),
+        "hours": body.get("hours", 1),
+        "category": body.get("category", "review"),
+        "done": False,
+    }
+    result = supabase.table("study_tasks").insert(task).execute()
+    return jsonify(result.data[0]), 201
 
 
 @app.route("/api/study-tasks/<task_id>", methods=["PATCH"])
 def update_study_task(task_id):
-    task = StudyTask.query.get(task_id)
-    if not task:
+    rows = supabase.table("study_tasks").select("*").eq("id", task_id).execute().data
+    if not rows:
         return jsonify({"error": "Not found"}), 404
     body = request.json
+    updates = {}
     for field in ("date", "title", "hours", "category", "course_id"):
         if field in body:
-            setattr(task, field, body[field])
-    db.session.commit()
-    return jsonify(task.to_dict())
+            updates[field] = body[field]
+    supabase.table("study_tasks").update(updates).eq("id", task_id).execute()
+    updated = supabase.table("study_tasks").select("*").eq("id", task_id).execute().data[0]
+    return jsonify(updated)
 
 
 @app.route("/api/study-tasks/<task_id>", methods=["DELETE"])
 def delete_study_task(task_id):
-    task = StudyTask.query.get(task_id)
-    if not task:
-        return jsonify({"error": "Not found"}), 404
-    db.session.delete(task)
-    db.session.commit()
+    supabase.table("study_tasks").delete().eq("id", task_id).execute()
     return jsonify({"ok": True})
-
-
-# ─── AI Endpoints ───
-
-
-def call_ai(messages, temperature=0.7, max_tokens=1000):
-    api_key = os.getenv("HKBU_API_KEY")
-    base_url = os.getenv("HKBU_BASE_URL")
-    model = os.getenv("HKBU_MODEL", "gpt-4.1")
-    api_version = os.getenv("HKBU_API_VERSION", "2024-12-01-preview")
-
-    url = f"{base_url}/deployments/{model}/chat/completions?api-version={api_version}"
-    headers = {
-        "accept": "application/json",
-        "Content-Type": "application/json",
-        "api-key": api_key,
-    }
-    payload = {
-        "messages": messages, "temperature": temperature,
-        "max_tokens": max_tokens, "top_p": 1, "stream": False,
-    }
-    resp = http_requests.post(url, json=payload, headers=headers, timeout=60)
-    if resp.status_code == 200:
-        return resp.json()["choices"][0]["message"]["content"]
-    return f"AI Error ({resp.status_code}): {resp.text}"
-
-
-@app.route("/api/ai/chat", methods=["POST"])
-def ai_chat():
-    body = request.json
-    user_message = body.get("message", "")
-    course_context = body.get("course_id", "")
-
-    course = Course.query.get(course_context)
-    course_info = ""
-    if course:
-        topics = ", ".join(w.topic for w in course.weeks)
-        course_info = f"Course: {course.name}. Topics covered: {topics}."
-
-    system_prompt = (
-        "You are StudyDash AI, a helpful study assistant for a university student in Hong Kong. "
-        "You help with course material understanding, exam preparation, and study strategies. "
-        f"{course_info} "
-        "Be concise, clear, and educational. Use examples when helpful."
-    )
-    messages = [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": user_message},
-    ]
-
-    reply = call_ai(messages)
-    entry = ChatHistory(
-        id=str(uuid.uuid4()), course_id=course_context,
-        user_message=user_message, ai_reply=reply,
-        timestamp=datetime.now().isoformat(),
-    )
-    db.session.add(entry)
-    db.session.commit()
-    return jsonify(entry.to_dict())
-
-
-@app.route("/api/ai/quiz", methods=["POST"])
-def ai_generate_quiz():
-    import json as json_mod
-    body = request.json
-    course_id = body.get("course_id", "")
-    week = body.get("week", None)
-    topic = body.get("topic", "")
-
-    course = Course.query.get(course_id)
-    if not course:
-        return jsonify({"error": "Course not found"}), 404
-
-    if week:
-        w = Week.query.filter_by(course_id=course_id, week_num=week).first()
-        if w:
-            topic = f"{w.topic}: {w.details}"
-
-    system_prompt = (
-        "You are a quiz generator for university courses. Generate a quiz with 5 multiple-choice questions. "
-        "Format your response as JSON with this structure: "
-        '{"questions": [{"question": "...", "options": ["A) ...", "B) ...", "C) ...", "D) ..."], "correct": "A", "explanation": "..."}]}'
-    )
-    messages = [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": f"Generate a quiz about: {topic} for the course {course.name}."},
-    ]
-
-    reply = call_ai(messages, temperature=0.5, max_tokens=2000)
-    try:
-        clean = reply.strip()
-        if clean.startswith("```"):
-            clean = clean.split("\n", 1)[1].rsplit("```", 1)[0]
-        quiz_data = json_mod.loads(clean)
-    except (json_mod.JSONDecodeError, IndexError):
-        quiz_data = {"raw": reply}
-
-    return jsonify(quiz_data)
-
-
-@app.route("/api/ai/summarize", methods=["POST"])
-def ai_summarize():
-    body = request.json
-    material_id = body.get("material_id", "")
-    material = Material.query.get(material_id)
-    if not material or not material.file_path:
-        return jsonify({"error": "Material not found or no file"}), 404
-
-    try:
-        reader = PdfReader(material.file_path)
-        text = ""
-        for page in reader.pages[:20]:
-            text += page.extract_text() or ""
-        text = text[:8000]
-    except Exception as e:
-        return jsonify({"error": f"Could not read PDF: {str(e)}"}), 400
-
-    messages = [
-        {"role": "system", "content": "You are a study assistant. Summarize the following lecture/document content into clear, concise study notes with key points and important concepts. Use bullet points and headers."},
-        {"role": "user", "content": f"Summarize this document:\n\n{text}"},
-    ]
-    summary = call_ai(messages, max_tokens=1500)
-    return jsonify({"summary": summary, "material_id": material_id})
-
-
-@app.route("/api/ai/explain", methods=["POST"])
-def ai_explain():
-    body = request.json
-    topic = body.get("topic", "")
-    course_id = body.get("course_id", "")
-    course = Course.query.get(course_id)
-    course_name = course.name if course else "your course"
-
-    messages = [
-        {"role": "system", "content": f"You are a university tutor for {course_name}. Explain topics clearly with examples, analogies, and key takeaways. Structure your explanation with headers and bullet points."},
-        {"role": "user", "content": f"Explain this topic in detail: {topic}"},
-    ]
-    explanation = call_ai(messages, max_tokens=2000)
-    return jsonify({"explanation": explanation, "topic": topic})
-
-
-@app.route("/api/ai/study-plan", methods=["POST"])
-def ai_study_plan():
-    today_str = date.today().isoformat()
-    body = request.json or {}
-    course_ids = body.get("course_ids")
-    deadline_ids = body.get("deadline_ids")
-    material_ids = body.get("material_ids")
-    task_ids = body.get("task_ids")
-
-    if course_ids is not None:
-        courses = Course.query.filter(Course.id.in_(course_ids)).all()
-    else:
-        courses = Course.query.all()
-
-    progress_summary = []
-    for course in courses:
-        mats = Material.query.filter_by(course_id=course.id).all()
-        completed = [m for m in mats if m.completed]
-        upcoming = Deadline.query.filter(
-            Deadline.course_id == course.id, Deadline.done == False, Deadline.date >= today_str
-        ).order_by(Deadline.date).limit(3).all()
-        progress_summary.append(
-            f"{course.name}: {len(completed)}/{len(mats)} materials completed. "
-            f"Upcoming deadlines: {', '.join(d.title + ' (' + d.date + ')' for d in upcoming)}"
-        )
-
-    extra_context = []
-
-    if deadline_ids is not None:
-        deadlines = Deadline.query.filter(Deadline.id.in_(deadline_ids)).order_by(Deadline.date).all()
-    else:
-        deadlines = Deadline.query.filter(Deadline.done == False, Deadline.date >= today_str).order_by(Deadline.date).all()
-    if deadlines:
-        dl_lines = [f"  - {d.title} (due {d.date}, weight: {d.weight})" for d in deadlines]
-        extra_context.append("Selected deadlines:\n" + "\n".join(dl_lines))
-
-    if material_ids is not None:
-        materials = Material.query.filter(Material.id.in_(material_ids)).all()
-    else:
-        materials = Material.query.filter(Material.completed == False).all()
-    if materials:
-        mat_lines = []
-        for m in materials:
-            c = Course.query.get(m.course_id)
-            cname = c.name if c else m.course_id
-            week_str = f" Week {m.week}" if m.week else ""
-            mat_lines.append(f"  - {m.title or 'Untitled'} ({cname}{week_str}, {m.type})")
-        extra_context.append("Selected pending materials:\n" + "\n".join(mat_lines))
-
-    if task_ids is not None:
-        tasks = StudyTask.query.filter(StudyTask.id.in_(task_ids)).all()
-    else:
-        tasks = StudyTask.query.filter(StudyTask.done == False).order_by(StudyTask.date).all()
-    if tasks:
-        task_lines = [f"  - {t.title} (date: {t.date}, {t.hours}h, {t.category})" for t in tasks]
-        extra_context.append("Selected pending tasks:\n" + "\n".join(task_lines))
-
-    user_content = f"Today is {today_str}. Here's my progress:\n" + "\n".join(progress_summary)
-    if extra_context:
-        user_content += "\n\n" + "\n\n".join(extra_context)
-
-    messages = [
-        {"role": "system", "content": "You are a study planner. Based on the student's current progress, upcoming deadlines, pending materials, and existing tasks, create a focused, actionable study plan for the next 7 days. Be specific about what to study each day and for how long."},
-        {"role": "user", "content": user_content},
-    ]
-    plan = call_ai(messages, max_tokens=1500)
-    return jsonify({"plan": plan, "generated_at": today_str})
-
-
-# ─── Settings ───
-
-ENV_PATH = Path(__file__).parent / ".env"
-
-@app.route("/api/settings", methods=["GET"])
-def get_settings():
-    return jsonify({
-        "api_key": os.getenv("HKBU_API_KEY", ""),
-        "base_url": os.getenv("HKBU_BASE_URL", ""),
-        "model": os.getenv("HKBU_MODEL", "gpt-4.1"),
-        "api_version": os.getenv("HKBU_API_VERSION", "2024-12-01-preview"),
-    })
-
-
-@app.route("/api/settings", methods=["PUT"])
-def update_settings():
-    body = request.json
-    mapping = {
-        "api_key": "HKBU_API_KEY",
-        "base_url": "HKBU_BASE_URL",
-        "model": "HKBU_MODEL",
-        "api_version": "HKBU_API_VERSION",
-    }
-    for field, env_var in mapping.items():
-        if field in body:
-            os.environ[env_var] = body[field]
-
-    lines = []
-    for field, env_var in mapping.items():
-        lines.append(f"{env_var}={os.getenv(env_var, '')}")
-    ENV_PATH.write_text("\n".join(lines) + "\n")
-
-    return jsonify({"ok": True})
-
-
-@app.route("/api/settings/test", methods=["POST"])
-def test_settings():
-    try:
-        reply = call_ai(
-            [{"role": "user", "content": "Say 'API connection successful' in one short sentence."}],
-            temperature=0, max_tokens=30,
-        )
-        is_error = reply.startswith("AI Error")
-        return jsonify({"ok": not is_error, "message": reply})
-    except Exception as e:
-        return jsonify({"ok": False, "message": str(e)})
 
 
 if __name__ == "__main__":

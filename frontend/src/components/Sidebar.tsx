@@ -3,15 +3,14 @@ import {
   LayoutDashboard,
   CalendarClock,
   BookMarked,
-  Bot,
-  Sparkles,
   Brain,
   Eye,
-  Settings,
+  Mic,
 } from "lucide-react";
 const courseLinks = [
   { to: "/course/nlp", label: "NLP & LLM", color: "#6366f1", icon: Brain },
   { to: "/course/cvpr", label: "CVPR", color: "#f59e0b", icon: Eye },
+  { to: "/course/it-forum", label: "IT Forum", color: "#10b981", icon: Mic },
 ];
 
 export default function Sidebar() {
@@ -48,34 +47,6 @@ export default function Sidebar() {
       >
         <BookMarked size={18} />
         <span>Revision</span>
-      </NavLink>
-      <NavLink
-        to="/ai"
-        className={({ isActive }) =>
-          `sidebar-link ${isActive ? "active" : ""}`
-        }
-      >
-        <Bot size={18} />
-        <span>AI Assistant</span>
-      </NavLink>
-      <NavLink
-        to="/study-plan"
-        className={({ isActive }) =>
-          `sidebar-link ${isActive ? "active" : ""}`
-        }
-      >
-        <Sparkles size={18} />
-        <span>AI Study Plan</span>
-      </NavLink>
-
-      <NavLink
-        to="/settings"
-        className={({ isActive }) =>
-          `sidebar-link ${isActive ? "active" : ""}`
-        }
-      >
-        <Settings size={18} />
-        <span>Settings</span>
       </NavLink>
 
       <div className="sidebar-section">Courses</div>

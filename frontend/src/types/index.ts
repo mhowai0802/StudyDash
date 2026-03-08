@@ -29,29 +29,9 @@ export interface Course {
   color: string;
   assessment: Assessment;
   weeks: Week[];
-  total_materials?: number;
-  completed_materials?: number;
   total_weeks?: number;
-}
-
-export interface CourseDetail extends Course {
-  materials: Material[];
-  completed_material_ids: string[];
-  completed_count: number;
-}
-
-export interface Material {
-  id: string;
-  course_id: string;
-  week: number;
-  title: string;
-  type: string;
-  xp: number;
-  created_at: string;
-  file_path?: string | null;
-  file_name?: string | null;
-  url?: string;
-  completed?: boolean;
+  total_tasks?: number;
+  completed_tasks?: number;
 }
 
 export interface Deadline {
@@ -63,21 +43,6 @@ export interface Deadline {
   type: string;
   done: boolean;
   urgency?: string;
-}
-
-export interface ChatEntry {
-  id: string;
-  course_id: string;
-  user_message: string;
-  ai_reply: string;
-  timestamp: string;
-}
-
-export interface QuizQuestion {
-  question: string;
-  options: string[];
-  correct: string;
-  explanation: string;
 }
 
 export interface StudyTask {

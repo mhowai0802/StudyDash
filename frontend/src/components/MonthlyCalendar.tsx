@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef } from "react";
-import { ChevronLeft, ChevronRight, Check, Plus, Trash2, Clock, FileText, ExternalLink, CalendarDays } from "lucide-react";
-import type { Course, Deadline, StudyTask, TaskCategories, Material } from "../types";
+import { ChevronLeft, ChevronRight, Check, Plus, Trash2, Clock, CalendarDays } from "lucide-react";
+import type { Course, Deadline, StudyTask, TaskCategories } from "../types";
 
 interface CalendarEvent {
   id: string;
@@ -15,11 +15,11 @@ interface MonthlyCalendarProps {
   deadlines: Deadline[];
   studyTasks: StudyTask[];
   taskCategories: TaskCategories;
-  materials: Material[];
   onToggleTask: (id: string) => void;
   onAddTask: (task: { date: string; course_id: string; title: string; hours: number; category: string }) => void;
   onDeleteTask: (id: string) => void;
   onUpdateTask: (id: string, updates: Partial<{ date: string; title: string; hours: number; category: string; course_id: string }>) => void;
+  onToggleDeadline: (id: string) => void;
 }
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -71,67 +71,16 @@ function formatDateKey(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-function getTaskWeekNumbers(title: string): number[] {
-  const weeks: number[] = [];
-  const patterns = [
-    /week\s*(\d+)/gi,
-    /weeks?\s*(\d+)\s*[-–]\s*(\d+)/gi,
-    /\bw(\d+)\b/gi,
-  ];
-  for (const p of patterns) {
-    let m;
-    while ((m = p.exec(title)) !== null) {
-      if (m[2]) {
-        for (let i = parseInt(m[1]); i <= parseInt(m[2]); i++) weeks.push(i);
-      } else {
-        weeks.push(parseInt(m[1]));
-      }
-    }
-  }
-  const lectureMatch = title.match(/lecture\s*(\d+)/i);
-  if (lectureMatch) weeks.push(parseInt(lectureMatch[1]));
-  const labMatch = title.match(/\blab\s*(\d+)/i);
-  if (labMatch) {
-    const labToWeek: Record<string, number[]> = {
-      "nlp": [0, 5, 9, 11],
-      "cvpr": [0, 2, 3, 4, 7, 8, 9, 10],
-    };
-    const labNum = parseInt(labMatch[1]);
-    // Lab numbers don't directly map to weeks without course context, just return labNum
-    weeks.push(labNum);
-  }
-  return [...new Set(weeks)];
-}
-
-function getTaskMaterials(task: StudyTask, materials: Material[]): Material[] {
-  if (!task.course_id) return [];
-  const courseMats = materials.filter((m) => m.course_id === task.course_id && m.week > 0);
-  const title = task.title.toLowerCase();
-
-  // Extract week references from task title
-  const weekNums = getTaskWeekNumbers(task.title);
-  if (weekNums.length > 0) {
-    return courseMats.filter((m) => weekNums.includes(m.week));
-  }
-
-  // Fallback: match keywords in title to material filenames
-  const keywords = title.split(/\s+/).filter((w) => w.length > 3);
-  return courseMats.filter((m) => {
-    const fname = (m.file_name || m.title || "").toLowerCase();
-    return keywords.some((kw) => fname.includes(kw));
-  }).slice(0, 5);
-}
-
 export default function MonthlyCalendar({
   courses,
   deadlines,
   studyTasks,
   taskCategories,
-  materials,
   onToggleTask,
   onAddTask,
   onDeleteTask,
   onUpdateTask,
+  onToggleDeadline,
 }: MonthlyCalendarProps) {
   const today = new Date();
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
@@ -183,6 +132,15 @@ export default function MonthlyCalendar({
     return map;
   }, [courses, deadlines, courseColorMap]);
 
+  const deadlinesMap = useMemo(() => {
+    const map: Record<string, Deadline[]> = {};
+    deadlines.forEach((d) => {
+      if (!map[d.date]) map[d.date] = [];
+      map[d.date].push(d);
+    });
+    return map;
+  }, [deadlines]);
+
   const tasksMap = useMemo(() => {
     const map: Record<string, StudyTask[]> = {};
     studyTasks.forEach((t) => {
@@ -230,6 +188,7 @@ export default function MonthlyCalendar({
   };
 
   const selectedEvents = selectedDate ? eventsMap[selectedDate] || [] : [];
+  const selectedDeadlines = selectedDate ? deadlinesMap[selectedDate] || [] : [];
   const selectedTasks = selectedDate ? tasksMap[selectedDate] || [] : [];
   const selectedDayHours = selectedTasks.reduce((sum, t) => sum + t.hours, 0);
   const selectedDayDone = selectedTasks.filter((t) => t.done).length;
@@ -399,19 +358,59 @@ export default function MonthlyCalendar({
             </div>
           )}
 
-          {/* Course events */}
-          {selectedEvents.length > 0 && (
+          {/* Course events (non-deadline) */}
+          {selectedEvents.filter((ev) => !ev.id.startsWith("dl-")).length > 0 && (
             <div style={{ marginBottom: 16 }}>
               <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", marginBottom: 8, marginTop: 12 }}>
                 Course Events
               </div>
               <div className="calendar-detail-list">
-                {selectedEvents.map((ev) => {
+                {selectedEvents.filter((ev) => !ev.id.startsWith("dl-")).map((ev) => {
                   const style = EVENT_STYLES[ev.type];
                   return (
                     <div key={ev.id} className="calendar-detail-item" style={{ background: style?.bg, borderLeft: `4px solid ${style?.border}` }}>
                       <div className="calendar-detail-item-type">{ev.type.toUpperCase()}</div>
                       <div className="calendar-detail-item-title">{ev.title}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Deadlines (toggleable) */}
+          {selectedDeadlines.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)", marginBottom: 8, marginTop: 12 }}>
+                Deadlines ({selectedDeadlines.filter((d) => d.done).length}/{selectedDeadlines.length})
+              </div>
+              <div className="calendar-detail-list">
+                {selectedDeadlines.map((d) => {
+                  const courseColor = COURSE_COLORS[d.course_id] || "var(--text-muted)";
+                  return (
+                    <div
+                      key={d.id}
+                      className="calendar-task-detail-item"
+                      style={{ borderLeft: `4px solid ${d.type === "exam" ? "#f43f5e" : "#f59e0b"}`, opacity: d.done ? 0.6 : 1 }}
+                    >
+                      <div
+                        className={`calendar-task-check ${d.done ? "done" : ""}`}
+                        onClick={(e) => { e.stopPropagation(); onToggleDeadline(d.id); }}
+                        style={{ borderColor: d.done ? "var(--accent-emerald)" : "#f59e0b" }}
+                      >
+                        {d.done && <Check size={12} color="white" />}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div className={`calendar-task-title ${d.done ? "done" : ""}`}>{d.title}</div>
+                        <div className="calendar-task-meta">
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                            <span style={{ width: 6, height: 6, borderRadius: "50%", background: courseColor }} />
+                            {d.course_id.toUpperCase()}
+                          </span>
+                          <span style={{ fontWeight: 600, textTransform: "capitalize" }}>{d.type}</span>
+                          {d.weight && <span>{d.weight}</span>}
+                        </div>
+                      </div>
                     </div>
                   );
                 })}
@@ -459,33 +458,6 @@ export default function MonthlyCalendar({
                           <span style={{ color: catColor, fontWeight: 600 }}>{cat?.label || t.category}</span>
                           <span><Clock size={10} style={{ verticalAlign: "middle" }} /> {t.hours}h</span>
                         </div>
-                        {/* Related materials */}
-                        {(() => {
-                          const related = getTaskMaterials(t, materials);
-                          if (related.length === 0) return null;
-                          return (
-                            <div className="calendar-task-materials">
-                              {related.map((m) => (
-                                <a
-                                  key={m.id}
-                                  className="calendar-task-material-link"
-                                  href={
-                                    m.file_path
-                                      ? (m.file_path.startsWith("http") ? m.file_path : `http://localhost:5001/api/materials/file/${m.course_id}/${m.file_path.split("/").pop()}`)
-                                      : m.url || "#"
-                                  }
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  <FileText size={11} />
-                                  <span>{m.file_name || m.title}</span>
-                                  <ExternalLink size={9} />
-                                </a>
-                              ))}
-                            </div>
-                          );
-                        })()}
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "center" }}>
                         <button
